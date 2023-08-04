@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">RasoulOnlineShop</string>
+    <string name="no_connection_msg">No Connection</string>
+    <string name="network_error_msg">Network Error</string>
 </resources>
