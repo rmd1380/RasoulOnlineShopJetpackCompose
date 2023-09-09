@@ -7,7 +7,7 @@ import android.net.ConnectivityManager
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.multidex.BuildConfig
+import com.technolearn.rasoulonlineshop.BuildConfig
 import com.technolearn.rasoulonlineshop.R
 import saman.zamani.persiandate.PersianDate
 import saman.zamani.persiandate.PersianDateFormat

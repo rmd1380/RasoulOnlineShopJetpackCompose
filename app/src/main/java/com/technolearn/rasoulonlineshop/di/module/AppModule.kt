@@ -3,9 +3,9 @@ package com.technolearn.rasoulonlineshop.di.module
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.multidex.BuildConfig
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.gson.GsonBuilder
+import com.technolearn.rasoulonlineshop.BuildConfig
 import com.technolearn.rasoulonlineshop.api.ApiService
 import com.technolearn.rasoulonlineshop.util.Constants
 import dagger.Module
