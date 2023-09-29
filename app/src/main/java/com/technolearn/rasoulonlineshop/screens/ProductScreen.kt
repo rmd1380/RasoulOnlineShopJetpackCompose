@@ -1,6 +1,5 @@
 package com.technolearn.rasoulonlineshop.screens
 
-import android.accessibilityservice.AccessibilityService.ScreenshotResult
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -11,12 +10,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -46,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.technolearn.rasoulonlineshop.R
-import com.technolearn.rasoulonlineshop.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.MetroPoliceFontFamily
@@ -61,16 +59,11 @@ import kotlin.math.floor
 @Composable
 fun ProductScreen(navController: NavController) {
     val test: ArrayList<SliderRes> = arrayListOf()
-    test.add(SliderRes(1, R.drawable.test_image_slider, "", "subtitle1", "slider1"))
+    test.add(SliderRes(1, R.drawable.test_image_slider1, "", "subtitle1", "slider1"))
     test.add(SliderRes(2, R.drawable.test_image_slider2, "", "subtitle2", "slider2"))
     test.add(SliderRes(3, R.drawable.test_image_slider3, "", "subtitle3", "slider3"))
     test.add(SliderRes(4, R.drawable.test_image_slider4, "", "subtitle4", "slider4"))
-    val test2= arrayListOf(
-        R.drawable.test_image_slider,
-        R.drawable.test_image_slider2,
-        R.drawable.test_image_slider3,
-        R.drawable.test_image_slider4,
-    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -86,7 +79,7 @@ fun ProductScreen(navController: NavController) {
                 HorizontalPager(
                     state = pagerState,
                     key = { index: Int -> test[index].id!!.toInt() },
-                ){index->
+                ) { index ->
                     SliderItem(sliderRes = test[index])
                 }
 //                LazyRow(
@@ -130,8 +123,10 @@ fun ProductScreen(navController: NavController) {
                         fontSize = 14.sp,
                         fontFamily = MetroPoliceFontFamily,
                         fontWeight = FontWeight.Normal,
+                        modifier = Modifier.clickable {
 
-                        )
+                        }
+                    )
                 }
                 Spacer(modifier = Modifier.height(18.dp))
             }
@@ -139,7 +134,7 @@ fun ProductScreen(navController: NavController) {
             item {
                 LazyRow(contentPadding = PaddingValues(start = 18.dp)) {
                     items(test) { productRes ->
-                        ProductItem(productRes = productRes,navController)
+                        ProductItem(productRes = productRes, navController)
                     }
                 }
                 Spacer(modifier = Modifier.height(18.dp))
@@ -175,8 +170,10 @@ fun ProductScreen(navController: NavController) {
                         fontSize = 14.sp,
                         fontFamily = MetroPoliceFontFamily,
                         fontWeight = FontWeight.Normal,
+                        modifier = Modifier.clickable {
 
-                        )
+                        }
+                    )
                 }
                 Spacer(modifier = Modifier.height(18.dp))
             }
@@ -197,20 +194,21 @@ fun ProductItem(productRes: SliderRes, navController: NavController) {
     var haveDiscount by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier
-            .width(200.dp)
-            .height(310.dp)
-            .padding(end = 16.dp)
-            .clickable {
-                navController.navigate(Screen.ProductDetailScreen.route)
-            },
         shape = RoundedCornerShape(8.dp),
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .height(360.dp)
+            .padding(end = 16.dp)
+            .aspectRatio(15f / 26f, true)
+            .clickable {
+//                navController.navigate(Screen.ProductDetailScreen.route)
+            },
         elevation = 0.dp
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
-                    .height(210.dp)
+                    .height(260.dp)
                     .fillMaxWidth()
             ) {
                 Box(
@@ -222,7 +220,7 @@ fun ProductItem(productRes: SliderRes, navController: NavController) {
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
+                            .height(250.dp)
                             .clip(shape = RoundedCornerShape(8.dp)),
                         contentScale = ContentScale.Crop,
                     )
@@ -304,15 +302,9 @@ fun ProductItem(productRes: SliderRes, navController: NavController) {
                         fontWeight = FontWeight.Medium,
                     )
                 }
-
             }
-
-
         }
-
-
     }
-
 }
 
 @Composable
@@ -374,7 +366,6 @@ fun SliderItem(sliderRes: SliderRes) {
     }
 }
 
-
 //Helper
 @Composable
 fun CustomRatingBar(
@@ -434,7 +425,6 @@ fun AddToFavorite(modifier: Modifier) {
         }
     }
 }
-
 //Helper
 
 
