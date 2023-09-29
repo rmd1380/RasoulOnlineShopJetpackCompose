@@ -4,4 +4,5 @@
     <string name="network_error_msg">Network Error</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_main_product_screen">MainProductScreen</string>
 </resources>

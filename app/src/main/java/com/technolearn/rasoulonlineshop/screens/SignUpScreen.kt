@@ -1,4 +1,4 @@
-package com.technolearn.rasoulonlineshop
+package com.technolearn.rasoulonlineshop.screens
 
 import android.util.Patterns
 import androidx.compose.foundation.border
@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.technolearn.rasoulonlineshop.R
+import com.technolearn.rasoulonlineshop.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.Error
@@ -54,7 +56,7 @@ import com.technolearn.rasoulonlineshop.ui.theme.Success
 import com.technolearn.rasoulonlineshop.ui.theme.White
 
 @Composable
-fun SignUpView(navController: NavController) {
+fun SignUpScreen(navController: NavController) {
     val contextForToast = LocalContext.current.applicationContext
     Scaffold(
         backgroundColor = Background,
@@ -318,6 +320,8 @@ fun SignUpView(navController: NavController) {
 
                             !nameHasError && !emailHasError && !passwordHasError -> {
 
+                                navController.navigate(Screen.ProductScreen.route)
+
                             }
                         }
                     },
@@ -353,5 +357,5 @@ fun SignUpView(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun SignUpPreview() {
-    SignUpView(rememberNavController())
+    SignUpScreen(rememberNavController())
 }
