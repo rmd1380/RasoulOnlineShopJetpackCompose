@@ -1,4 +1,4 @@
-package com.technolearn.rasoulonlineshop
+package com.technolearn.rasoulonlineshop.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
