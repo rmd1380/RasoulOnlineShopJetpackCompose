@@ -3,7 +3,6 @@ package com.technolearn.rasoulonlineshop.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,13 +20,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,30 +33,106 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.technolearn.rasoulonlineshop.R
+import com.technolearn.rasoulonlineshop.helper.AddToFavorite
+import com.technolearn.rasoulonlineshop.helper.CustomButton
+import com.technolearn.rasoulonlineshop.helper.CustomRatingBar
+import com.technolearn.rasoulonlineshop.helper.Label
+import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Black
+import com.technolearn.rasoulonlineshop.ui.theme.FontBold34
+import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
+import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
+import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
+import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold16
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
-import com.technolearn.rasoulonlineshop.ui.theme.MetroPoliceFontFamily
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.White
+import com.technolearn.rasoulonlineshop.util.Extensions.orFalse
+import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
+import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
+import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import com.technolearn.rasoulonlineshop.vo.res.SliderRes
-import kotlin.math.ceil
-import kotlin.math.floor
+import timber.log.Timber
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductScreen(navController: NavController) {
-    val test: ArrayList<SliderRes> = arrayListOf()
-    test.add(SliderRes(1, R.drawable.test_image_slider1, "", "subtitle1", "slider1"))
-    test.add(SliderRes(2, R.drawable.test_image_slider2, "", "subtitle2", "slider2"))
-    test.add(SliderRes(3, R.drawable.test_image_slider3, "", "subtitle3", "slider3"))
-    test.add(SliderRes(4, R.drawable.test_image_slider4, "", "subtitle4", "slider4"))
+    val testSlider: ArrayList<SliderRes> = arrayListOf()
+    val testProduct: ArrayList<ProductRes> = arrayListOf()
+    testSlider.add(SliderRes(1, R.drawable.test_image_slider1, "", "subtitle1", "slider1"))
+    testSlider.add(SliderRes(2, R.drawable.test_image_slider2, "", "subtitle2", "slider2"))
+    testSlider.add(SliderRes(3, R.drawable.test_image_slider3, "", "subtitle3", "slider3"))
+    testSlider.add(SliderRes(4, R.drawable.test_image_slider4, "", "subtitle4", "slider4"))
+
+    testProduct.add(
+        ProductRes(
+            11,
+            "Adidas",
+            "Shirt",
+            arrayListOf(R.drawable.test_image_slider1, R.drawable.test_image_slider2),
+            "",
+            19.9,
+            3.0,
+            "NEW",
+            "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
+                    "frill-trimmed square neckline with concealed elastication." +
+                    " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
+            0f
+        )
+    )
+    testProduct.add(
+        ProductRes(
+            12,
+            "Nike",
+            "Shoes",
+            arrayListOf(R.drawable.test_image_slider2, R.drawable.test_image_slider3),
+            "",
+            25.0,
+            3.5,
+            "5%",
+            "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
+                    "frill-trimmed square neckline with concealed elastication." +
+                    " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
+            5f
+        )
+    )
+    testProduct.add(
+        ProductRes(
+            13,
+            "D&G",
+            "Shirt",
+            arrayListOf(R.drawable.test_image_slider3, R.drawable.test_image_slider4),
+            "",
+            12.0,
+            2.0,
+            "NEW",
+            "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
+                    "frill-trimmed square neckline with concealed elastication." +
+                    " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
+            25f
+        )
+    )
+    testProduct.add(
+        ProductRes(
+            14,
+            "Jack&Jones",
+            "pant",
+            arrayListOf(R.drawable.test_image_slider4, R.drawable.test_image_slider1),
+            "",
+            16.3,
+            4.0,
+            "30%",
+            "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
+                    "frill-trimmed square neckline with concealed elastication." +
+                    " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
+            30f
+        )
+    )
 
     Box(
         modifier = Modifier
@@ -75,21 +145,13 @@ fun ProductScreen(navController: NavController) {
 
             //Slider
             item {
-                val pagerState = rememberPagerState { test.size }
+                val pagerState = rememberPagerState { testSlider.size }
                 HorizontalPager(
                     state = pagerState,
-                    key = { index: Int -> test[index].id!!.toInt() },
+                    key = { index: Int -> testSlider[index].id!!.toInt() },
                 ) { index ->
-                    SliderItem(sliderRes = test[index])
+                    SliderItem(sliderRes = testSlider[index], navController)
                 }
-//                LazyRow(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                ) {
-//                    items(test) { sliderRes ->
-//                        SliderItem(sliderRes = sliderRes)
-//                    }
-//                }
                 Spacer(modifier = Modifier.height(18.dp))
             }
             //SomeText New-You've never seen it before!-View all
@@ -104,25 +166,16 @@ fun ProductScreen(navController: NavController) {
                     Column {
                         Text(
                             text = "New",
-                            color = Black,
-                            fontSize = 34.sp,
-                            fontFamily = MetroPoliceFontFamily,
-                            fontWeight = FontWeight.Bold
+                            style = FontBold34(Black),
                         )
                         Text(
                             text = "You've never seen it before!",
-                            color = Gray,
-                            fontSize = 11.sp,
-                            fontFamily = MetroPoliceFontFamily,
-                            fontWeight = FontWeight.Normal
+                            style = FontRegular11(Gray),
                         )
                     }
                     Text(
                         text = "View all",
-                        color = Black,
-                        fontSize = 14.sp,
-                        fontFamily = MetroPoliceFontFamily,
-                        fontWeight = FontWeight.Normal,
+                        style = FontRegular14(Black),
                         modifier = Modifier.clickable {
 
                         }
@@ -133,7 +186,7 @@ fun ProductScreen(navController: NavController) {
             //New Product Items
             item {
                 LazyRow(contentPadding = PaddingValues(start = 18.dp)) {
-                    items(test) { productRes ->
+                    items(testProduct.filter { it.label == "NEW" }) { productRes ->
                         ProductItem(productRes = productRes, navController)
                     }
                 }
@@ -151,27 +204,17 @@ fun ProductScreen(navController: NavController) {
                     Column {
                         Text(
                             text = "Popular",
-                            color = Black,
-                            fontSize = 34.sp,
-                            fontFamily = MetroPoliceFontFamily,
-                            fontWeight = FontWeight.Bold
+                            style = FontBold34(Black),
                         )
                         Text(
                             text = "Best products ever",
-                            color = Gray,
-                            fontSize = 11.sp,
-                            fontFamily = MetroPoliceFontFamily,
-                            fontWeight = FontWeight.Normal
+                            style = FontRegular11(Gray),
                         )
                     }
                     Text(
                         text = "View all",
-                        color = Black,
-                        fontSize = 14.sp,
-                        fontFamily = MetroPoliceFontFamily,
-                        fontWeight = FontWeight.Normal,
+                        style = FontRegular14(Black),
                         modifier = Modifier.clickable {
-
                         }
                     )
                 }
@@ -180,7 +223,7 @@ fun ProductScreen(navController: NavController) {
             //Popular Product Items
             item {
                 LazyRow(contentPadding = PaddingValues(start = 18.dp)) {
-                    items(test) { productRes ->
+                    items(testProduct.filter { it.rate!! >= 3.5 }.reversed()) { productRes ->
                         ProductItem(productRes = productRes, navController = navController)
                     }
                 }
@@ -190,9 +233,8 @@ fun ProductScreen(navController: NavController) {
 }
 
 @Composable
-fun ProductItem(productRes: SliderRes, navController: NavController) {
-    var haveDiscount by remember { mutableStateOf(false) }
-
+fun ProductItem(productRes: ProductRes, navController: NavController) {
+    var isAddToFavorite by remember { mutableStateOf(false) }
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
@@ -201,7 +243,12 @@ fun ProductItem(productRes: SliderRes, navController: NavController) {
             .padding(end = 16.dp)
             .aspectRatio(15f / 26f, true)
             .clickable {
-//                navController.navigate(Screen.ProductDetailScreen.route)
+                navController.navigate(
+                    route = Screen.ProductDetailScreen.passProductId(
+                        productRes.id
+                    )
+                )
+                Timber.d("ProductScreen::::${productRes.id}")
             },
         elevation = 0.dp
     ) {
@@ -216,7 +263,7 @@ fun ProductItem(productRes: SliderRes, navController: NavController) {
                         .fillMaxWidth()
                 ) {
                     Image(
-                        painter = painterResource(id = productRes.image ?: R.drawable.ic_cross),
+                        painter = painterResource(id = productRes.image[0]),
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -224,60 +271,42 @@ fun ProductItem(productRes: SliderRes, navController: NavController) {
                             .clip(shape = RoundedCornerShape(8.dp)),
                         contentScale = ContentScale.Crop,
                     )
-                    Button(
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Primary,
-                        ),
-                        shape = RoundedCornerShape(25.dp),
-                        onClick = {},
+                    //////////
+                    //Label
+                    Label(
+                        productRes.label ?: "",
+                        30.dp,
                         modifier = Modifier
-                            .padding(top = 8.dp, start = 8.dp)
                             .align(Alignment.TopStart)
-                            .clickable(
-                                interactionSource = MutableInteractionSource(),
-                                indication = null,
-                                enabled = false
-                            ) {}
-                    ) {
-                        Text(
-                            modifier = Modifier.clickable(
-                                interactionSource = MutableInteractionSource(),
-                                indication = null,
-                                enabled = false
-                            ) { },
-                            text = "15%",
-                            color = White,
-                            fontFamily = MetroPoliceFontFamily,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp,
-                        )
-                    }
+                            .padding(top = 8.dp, start = 8.dp)
+                    )
+                    //////////
                 }
+
                 AddToFavorite(
                     modifier = Modifier
+                        .clickable {
+                            isAddToFavorite = !isAddToFavorite
+                        }
                         .size(36.dp)
-                        .align(Alignment.BottomEnd)
+                        .align(Alignment.BottomEnd),
+                    isAddToFavorite = isAddToFavorite
                 )
+
             }
             CustomRatingBar(
-                rating = 3.0,
+                rating = productRes.rate ?: 0.0,
                 stars = 5
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Mango",
-                color = Gray,
-                fontSize = 11.sp,
-                fontFamily = MetroPoliceFontFamily,
-                fontWeight = FontWeight.Normal
+                text = productRes.brand ?: "",
+                style = FontRegular11(Gray),
             )
             Spacer(modifier = Modifier.height(5.dp))
             Text(
-                text = "Shirt",
-                color = Black,
-                fontSize = 16.sp,
-                fontFamily = MetroPoliceFontFamily,
-                fontWeight = FontWeight.SemiBold
+                text = productRes.title ?: "",
+                style = FontSemiBold16(Black),
             )
             Spacer(modifier = Modifier.height(2.dp))
             Row(
@@ -285,21 +314,18 @@ fun ProductItem(productRes: SliderRes, navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "12$",
-                    color = if (haveDiscount) Gray else Black,
-                    fontSize = 14.sp,
-                    fontFamily = MetroPoliceFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    textDecoration = if (haveDiscount) TextDecoration.LineThrough else TextDecoration.None
+                    text = "${productRes.price}$",
+                    style = FontMedium14(if (productRes.hasDiscount!! > 0f) Gray else Black),
+                    textDecoration = if (productRes.hasDiscount!! > 0f) TextDecoration.LineThrough else TextDecoration.None
                 )
-                if (haveDiscount) {
+                if (productRes.hasDiscount!! > 0f) {
+                    val discountAmount =
+                        (productRes.price?.times(productRes.hasDiscount!!))?.div(100.0)
+                    val finalPrice = productRes.price?.minus(discountAmount!!)
                     Text(
                         modifier = Modifier.padding(start = 4.dp),
-                        text = "8$",
-                        color = Primary,
-                        fontSize = 14.sp,
-                        fontFamily = MetroPoliceFontFamily,
-                        fontWeight = FontWeight.Medium,
+                        text = "${finalPrice}$",
+                        style = FontMedium14(Primary),
                     )
                 }
             }
@@ -308,7 +334,7 @@ fun ProductItem(productRes: SliderRes, navController: NavController) {
 }
 
 @Composable
-fun SliderItem(sliderRes: SliderRes) {
+fun SliderItem(sliderRes: SliderRes, navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -329,103 +355,32 @@ fun SliderItem(sliderRes: SliderRes) {
         ) {
             Text(
                 text = sliderRes.title ?: "",
-                color = White,
-                fontSize = 34.sp,
-                fontFamily = MetroPoliceFontFamily,
-                fontWeight = FontWeight.Bold
+                style = FontBold34(White),
             )
             Text(
                 text = sliderRes.subTitle ?: "",
-                color = White,
-                fontSize = 34.sp,
-                fontFamily = MetroPoliceFontFamily,
-                fontWeight = FontWeight.Bold
+                style = FontBold34(White),
             )
 
-            Button(
-                colors = ButtonDefaults.buttonColors(
-                    backgroundColor = Primary,
-                ),
-                shape = RoundedCornerShape(25.dp),
+            CustomButton(
                 onClick = {
-
+                    navController.navigate(
+                        route = Screen.ProductDetailScreen.passProductId(
+                            sliderRes.id ?: 0
+                        )
+                    )
                 },
                 modifier = Modifier
-                    .padding(top = 18.dp)
-            ) {
-                Text(
-                    text = "Check",
-                    color = White,
-                    fontFamily = MetroPoliceFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(horizontal = 60.dp, vertical = 8.dp)
-                )
-            }
-        }
-    }
-}
-
-//Helper
-@Composable
-fun CustomRatingBar(
-    rating: Double = 0.0,
-    stars: Int = 5,
-) {
-    val filledStars = floor(rating).toInt()
-    val unfilledStars = (stars - ceil(rating)).toInt()
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-        repeat(filledStars) {
-            Image(
-                painter = painterResource(R.drawable.ic_start_active),
-                contentDescription = null,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-        repeat(unfilledStars) {
-            Image(
-                painter = painterResource(R.drawable.ic_start_inactive),
-                contentDescription = null,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-        Text(
-            modifier = Modifier.padding(start = 2.dp),
-            text = "(${rating})",
-            color = Gray,
-            fontSize = 11.sp,
-            fontFamily = MetroPoliceFontFamily,
-            fontWeight = FontWeight.Normal
-        )
-
-    }
-}
-
-@Composable
-fun AddToFavorite(modifier: Modifier) {
-    var isLiked by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = modifier,
-        elevation = 4.dp,
-        shape = CircleShape
-    ) {
-        IconButton(
-            modifier = Modifier
-                .fillMaxSize(),
-            onClick = {
-                isLiked = !isLiked
-            }
-        ) {
-            Icon(
-                painter = painterResource(id = if (isLiked) R.drawable.ic_heart_filled else R.drawable.ic_heart_not_filled),
-                contentDescription = if (isLiked) "Liked" else "Not Liked",
-                tint = if (isLiked) Primary else Gray
+                    .padding(top = 16.dp),
+                text = "Check",
+                style = ButtonStyle.CONTAINED,
+                size = ButtonSize.SMALL,
+                roundCorner = 25.dp,
+                buttonTextStyle = FontRegular14(White)
             )
         }
     }
 }
-//Helper
 
 
 

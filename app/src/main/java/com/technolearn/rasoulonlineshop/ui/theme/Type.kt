@@ -30,23 +30,3 @@ val Typography = Typography(
     )
     */
 )
-val MetroPoliceFontFamily = FontFamily(
-    Font(R.font.metropolis_black, FontWeight.Black),
-    Font(R.font.metropolis_black_italic, FontWeight.Black, FontStyle.Italic),
-    Font(R.font.metropolis_bold, FontWeight.Bold),
-    Font(R.font.metropolis_bold_italic, FontWeight.Bold, FontStyle.Italic),
-    Font(R.font.metropolis_extra_bold, FontWeight.ExtraBold),
-    Font(R.font.metropolis_extra_bold_italic, FontWeight.ExtraBold, FontStyle.Italic),
-    Font(R.font.metropolis_extra_light, FontWeight.ExtraLight),
-    Font(R.font.metropolis_extra_light_italic, FontWeight.ExtraLight, FontStyle.Italic),
-    Font(R.font.metropolis_light, FontWeight.Light),
-    Font(R.font.metropolis_light_italic, FontWeight.Light, FontStyle.Italic),
-    Font(R.font.metropolis_medium, FontWeight.Medium),
-    Font(R.font.metropolis_medium_italic, FontWeight.Medium, FontStyle.Italic),
-    Font(R.font.metropolis_regular, FontWeight.Normal),
-    Font(R.font.metropolis_regular_italic, FontWeight.Normal, FontStyle.Italic),
-    Font(R.font.metropolis_semi_bold, FontWeight.SemiBold),
-    Font(R.font.metropolis_semi_bold_italic, FontWeight.SemiBold, FontStyle.Italic),
-    Font(R.font.metropolis_thin, FontWeight.Thin),
-    Font(R.font.metropolis_thin_italic, FontWeight.Thin, FontStyle.Italic),
-)

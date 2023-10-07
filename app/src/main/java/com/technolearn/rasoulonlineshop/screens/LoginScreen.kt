@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
@@ -21,6 +19,7 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,24 +30,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.technolearn.rasoulonlineshop.R
+import com.technolearn.rasoulonlineshop.helper.CustomButton
 import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.Error
+import com.technolearn.rasoulonlineshop.ui.theme.FontBold34
+import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
-import com.technolearn.rasoulonlineshop.ui.theme.MetroPoliceFontFamily
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.Success
 import com.technolearn.rasoulonlineshop.ui.theme.White
+import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
+import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -56,7 +57,6 @@ fun LoginScreen(navController: NavController) {
     Scaffold(
         backgroundColor = Background,
         bottomBar = {
-
         },
         topBar = {
             TopAppBar(
@@ -66,8 +66,8 @@ fun LoginScreen(navController: NavController) {
                 navigationIcon = {
                     IconButton(onClick = {
                         navController.navigate(Screen.SignUpScreen.route) {
-                            popUpTo(Screen.SignUpScreen.route){
-                                inclusive=true
+                            popUpTo(Screen.SignUpScreen.route) {
+                                inclusive = true
                             }
                         }
                     }) {
@@ -80,7 +80,6 @@ fun LoginScreen(navController: NavController) {
                 backgroundColor = Color.Transparent,
                 elevation = 0.dp,
             )
-
         },
     ) {
         Box(
@@ -99,10 +98,7 @@ fun LoginScreen(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 14.dp),
-                    fontFamily = MetroPoliceFontFamily,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 34.sp,
-                    color = Black
+                    style = FontBold34(Black),
                 )
                 ///////TextField
                 var email by remember { mutableStateOf("") }
@@ -134,10 +130,7 @@ fun LoginScreen(navController: NavController) {
                     label = {
                         Text(
                             text = emailLabel,
-                            color = Gray,
-                            fontFamily = MetroPoliceFontFamily,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp,
+                            style = FontMedium14(Gray)
                         )
                     },
                     onValueChange = { value ->
@@ -171,10 +164,7 @@ fun LoginScreen(navController: NavController) {
                     label = {
                         Text(
                             text = passwordLabel,
-                            color = Gray,
-                            fontFamily = MetroPoliceFontFamily,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp,
+                            style = FontMedium14(Gray),
                         )
                     },
                     onValueChange = { value ->
@@ -196,8 +186,6 @@ fun LoginScreen(navController: NavController) {
                         } else {
                             passwordLabel = "Password"
                         }
-
-
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -222,11 +210,7 @@ fun LoginScreen(navController: NavController) {
                 ////////TextFieldEnd
                 Spacer(modifier = Modifier.height(64.dp))
                 /////////Button
-                Button(
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Primary,
-                    ),
-                    shape = RoundedCornerShape(25.dp),
+                CustomButton(
                     onClick = {
                         when {
                             email.isEmpty() -> {
@@ -246,16 +230,12 @@ fun LoginScreen(navController: NavController) {
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    Text(
-                        text = "LOGIN",
-                        color = White,
-                        fontFamily = MetroPoliceFontFamily,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp
-                    )
-                }
+                        .padding(horizontal = 16.dp),
+                    text = "LOGIN",
+                    style = ButtonStyle.CONTAINED,
+                    size = ButtonSize.BIG,
+                    roundCorner = 25.dp,
+                )
             }
         }
     }
