@@ -1,4 +1,4 @@
-package com.technolearn.rasoulonlineshop.screens
+package com.technolearn.rasoulonlineshop.screens.home
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -22,6 +22,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,15 +34,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.technolearn.rasoulonlineshop.MainActivity
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.AddToFavorite
 import com.technolearn.rasoulonlineshop.helper.CustomButton
 import com.technolearn.rasoulonlineshop.helper.CustomRatingBar
 import com.technolearn.rasoulonlineshop.helper.Label
+import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
 import com.technolearn.rasoulonlineshop.navigation.Screen
+import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontBold34
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
@@ -51,7 +56,7 @@ import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold16
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.White
-import com.technolearn.rasoulonlineshop.util.Extensions.orFalse
+import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
@@ -80,7 +85,7 @@ fun ProductScreen(navController: NavController) {
             3.0,
             "NEW",
             "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elastication." +
+                    "frill-trimmed square neckline with concealed elasticated." +
                     " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
             0f
         )
@@ -96,7 +101,7 @@ fun ProductScreen(navController: NavController) {
             3.5,
             "5%",
             "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elastication." +
+                    "frill-trimmed square neckline with concealed elasticated." +
                     " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
             5f
         )
@@ -112,7 +117,7 @@ fun ProductScreen(navController: NavController) {
             2.0,
             "NEW",
             "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elastication." +
+                    "frill-trimmed square neckline with concealed elasticated." +
                     " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
             25f
         )
@@ -128,103 +133,118 @@ fun ProductScreen(navController: NavController) {
             4.0,
             "30%",
             "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elastication." +
+                    "frill-trimmed square neckline with concealed elasticated." +
                     " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
             30f
         )
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
+    Scaffold(
+        backgroundColor = Background,
+        bottomBar = {
+            BottomNavigationBar(
+                list = MainActivity.navList,
+                navController = navController,
+            )
+        },
+        topBar = {
+
+        }
+
     ) {
-        LazyColumn(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
+                .padding(it)
         ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
 
-            //Slider
-            item {
-                val pagerState = rememberPagerState { testSlider.size }
-                HorizontalPager(
-                    state = pagerState,
-                    key = { index: Int -> testSlider[index].id!!.toInt() },
-                ) { index ->
-                    SliderItem(sliderRes = testSlider[index], navController)
-                }
-                Spacer(modifier = Modifier.height(18.dp))
-            }
-            //SomeText New-You've never seen it before!-View all
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 14.dp, start = 18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "New",
-                            style = FontBold34(Black),
-                        )
-                        Text(
-                            text = "You've never seen it before!",
-                            style = FontRegular11(Gray),
-                        )
+                //Slider
+                item {
+                    val pagerState = rememberPagerState { testSlider.size }
+                    HorizontalPager(
+                        state = pagerState,
+                        key = { index: Int -> testSlider[index].id!!.toInt() },
+                    ) { index ->
+                        SliderItem(sliderRes = testSlider[index], navController)
                     }
-                    Text(
-                        text = "View all",
-                        style = FontRegular14(Black),
-                        modifier = Modifier.clickable {
+                    Spacer(modifier = Modifier.height(18.dp))
+                }
+                //SomeText New-You've never seen it before!-View all
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 14.dp, start = 18.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.str_new),
+                                style = FontBold34(Black),
+                            )
+                            Text(
+                                text = stringResource(R.string.you_ve_never_seen_it_before),
+                                style = FontRegular11(Gray),
+                            )
+                        }
+                        Text(
+                            text = stringResource(R.string.view_all),
+                            style = FontRegular14(Black),
+                            modifier = Modifier.clickable {
 
-                        }
-                    )
-                }
-                Spacer(modifier = Modifier.height(18.dp))
-            }
-            //New Product Items
-            item {
-                LazyRow(contentPadding = PaddingValues(start = 18.dp)) {
-                    items(testProduct.filter { it.label == "NEW" }) { productRes ->
-                        ProductItem(productRes = productRes, navController)
-                    }
-                }
-                Spacer(modifier = Modifier.height(18.dp))
-            }
-            //SomeText Popular-Best products ever-View all
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 14.dp, start = 18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "Popular",
-                            style = FontBold34(Black),
-                        )
-                        Text(
-                            text = "Best products ever",
-                            style = FontRegular11(Gray),
+                            }
                         )
                     }
-                    Text(
-                        text = "View all",
-                        style = FontRegular14(Black),
-                        modifier = Modifier.clickable {
-                        }
-                    )
+                    Spacer(modifier = Modifier.height(18.dp))
                 }
-                Spacer(modifier = Modifier.height(18.dp))
-            }
-            //Popular Product Items
-            item {
-                LazyRow(contentPadding = PaddingValues(start = 18.dp)) {
-                    items(testProduct.filter { it.rate!! >= 3.5 }.reversed()) { productRes ->
-                        ProductItem(productRes = productRes, navController = navController)
+                //New Product Items
+                item {
+                    LazyRow(contentPadding = PaddingValues(start = 18.dp)) {
+                        items(testProduct.filter { it.label == "NEW" }) { productRes ->
+                            ProductItem(productRes = productRes, navController)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(18.dp))
+                }
+                //SomeText Popular-Best products ever-View all
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 14.dp, start = 18.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.popular),
+                                style = FontBold34(Black),
+                            )
+                            Text(
+                                text = stringResource(R.string.best_products_ever),
+                                style = FontRegular11(Gray),
+                            )
+                        }
+                        Text(
+                            text = stringResource(id = R.string.view_all),
+                            style = FontRegular14(Black),
+                            modifier = Modifier.clickable {
+                            }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(18.dp))
+                }
+                //Popular Product Items
+                item {
+                    LazyRow(contentPadding = PaddingValues(start = 18.dp)) {
+                        items(testProduct.filter { it.rate!! >= 3.5 }.reversed()) { productRes ->
+                            ProductItem(productRes = productRes, navController = navController)
+                        }
                     }
                 }
             }
@@ -274,7 +294,7 @@ fun ProductItem(productRes: ProductRes, navController: NavController) {
                     //////////
                     //Label
                     Label(
-                        productRes.label ?: "",
+                        productRes.label.orDefault(),
                         30.dp,
                         modifier = Modifier
                             .align(Alignment.TopStart)
@@ -295,17 +315,17 @@ fun ProductItem(productRes: ProductRes, navController: NavController) {
 
             }
             CustomRatingBar(
-                rating = productRes.rate ?: 0.0,
+                rating = productRes.rate.orDefault(),
                 stars = 5
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = productRes.brand ?: "",
+                text = productRes.brand.orDefault(),
                 style = FontRegular11(Gray),
             )
             Spacer(modifier = Modifier.height(5.dp))
             Text(
-                text = productRes.title ?: "",
+                text = productRes.title.orDefault(),
                 style = FontSemiBold16(Black),
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -354,11 +374,11 @@ fun SliderItem(sliderRes: SliderRes, navController: NavController) {
             verticalArrangement = Arrangement.Bottom
         ) {
             Text(
-                text = sliderRes.title ?: "",
+                text = sliderRes.title.orDefault(),
                 style = FontBold34(White),
             )
             Text(
-                text = sliderRes.subTitle ?: "",
+                text = sliderRes.subTitle.orDefault(),
                 style = FontBold34(White),
             )
 
@@ -366,13 +386,13 @@ fun SliderItem(sliderRes: SliderRes, navController: NavController) {
                 onClick = {
                     navController.navigate(
                         route = Screen.ProductDetailScreen.passProductId(
-                            sliderRes.id ?: 0
+                            sliderRes.id.orDefault()
                         )
                     )
                 },
                 modifier = Modifier
                     .padding(top = 16.dp),
-                text = "Check",
+                text = stringResource(R.string.check),
                 style = ButtonStyle.CONTAINED,
                 size = ButtonSize.SMALL,
                 roundCorner = 25.dp,

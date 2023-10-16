@@ -9,4 +9,7 @@ object Constants {
     object Prefs {
         const val SHARED_PREFS_NAME = "Rasoul_OnlineShop_Prefs"
     }
+    object Argument{
+        const val PRODUCT_ID = "PRODUCT_ID"
+    }
 }

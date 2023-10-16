@@ -1,4 +1,4 @@
-package com.technolearn.rasoulonlineshop.screens
+package com.technolearn.rasoulonlineshop.screens.auth
 
 import android.util.Patterns
 import androidx.compose.foundation.background
@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -34,13 +32,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.technolearn.rasoulonlineshop.R
@@ -52,8 +48,6 @@ import com.technolearn.rasoulonlineshop.ui.theme.Error
 import com.technolearn.rasoulonlineshop.ui.theme.FontBold34
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
-import com.technolearn.rasoulonlineshop.ui.theme.MetroPoliceFontFamily
-import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.Success
 import com.technolearn.rasoulonlineshop.ui.theme.White
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize

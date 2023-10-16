@@ -1,4 +1,4 @@
-package com.technolearn.rasoulonlineshop.screens
+package com.technolearn.rasoulonlineshop.screens.home
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,17 +16,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -37,24 +42,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.technolearn.rasoulonlineshop.MainActivity
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.AddToFavorite
+import com.technolearn.rasoulonlineshop.helper.CustomButton
 import com.technolearn.rasoulonlineshop.helper.CustomRatingBar
+import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
 import com.technolearn.rasoulonlineshop.helper.DropDown
 import com.technolearn.rasoulonlineshop.helper.Tag
+import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
+import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
 import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
-import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold16
@@ -62,6 +73,8 @@ import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold24
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
+import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
+import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -80,7 +93,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
             3.0,
             "NEW",
             "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elastication." +
+                    "frill-trimmed square neckline with concealed elasticated." +
                     " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
             0f
         )
@@ -96,7 +109,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
             3.5,
             "5%",
             "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elastication." +
+                    "frill-trimmed square neckline with concealed elasticated." +
                     " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
             5f
         )
@@ -112,7 +125,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
             2.0,
             "NEW",
             "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elastication." +
+                    "frill-trimmed square neckline with concealed elasticated." +
                     " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
             25f
         )
@@ -128,7 +141,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
             4.0,
             "30%",
             "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elastication." +
+                    "frill-trimmed square neckline with concealed elasticated." +
                     " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
             30f
         )
@@ -149,45 +162,46 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
     Scaffold(
         backgroundColor = Background,
         bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(0.5.dp)
+            ) {
+                CustomButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    text = stringResource(R.string.add_to_cart),
+                    onClick = {
 
+                    }
+                )
+            }
         },
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = testProduct.title ?: "",
-                        style = FontSemiBold18(Black),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        navController.navigate(Screen.ProductScreen.route) {
-                            popUpTo(Screen.ProductScreen.route) {
-                                inclusive = true
-                            }
+            CustomTopAppBar(
+                title = testProduct.title.orDefault(),
+                style = FontSemiBold18(Black),
+                navigationIcon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                actionIcons = arrayListOf(
+                    CustomAction("Share", ImageVector.vectorResource(id = R.drawable.ic_share))
+                ),
+                navigationOnClick = {
+                    navController.navigate(NavigationBarItemsGraph.Home.route) {
+                        popUpTo(NavigationBarItemsGraph.Home.route) {
+                            inclusive = true
                         }
-                    }) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(id = R.drawable.ic_back),
-                            contentDescription = "ic_back",
-                        )
                     }
                 },
-                actions = {
-                    IconButton(onClick = {
-                        // Handle share icon click here
-                    }) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(id = R.drawable.ic_share),
-                            contentDescription = "ic_share",
-                        )
+                actionOnclick = { customAction ->
+                    when (customAction.name) {
+                        "Share" -> {
+                        }
                     }
-                },
-                backgroundColor = Color.Transparent,
-                elevation = 0.dp,
+                }
             )
+
+
         }
 
     ) {
@@ -199,7 +213,8 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
 
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(bottom = 32.dp)
             ) {
 //                SliderItem(sliderRes = testProduct[index].image[0])
                 //Slider
@@ -323,12 +338,15 @@ fun DropdownsWithAddFavorite() {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Select size",
+                        text = stringResource(R.string.select_size),
                         style = FontSemiBold18(Black),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
                     )
-                    LazyVerticalGrid(columns = GridCells.Fixed(3)) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                    ) {
                         items(buttonSizeLabels.size) { index ->
                             Tag(
                                 defaultValue = buttonSizeLabels[index],
@@ -357,7 +375,7 @@ fun DropdownsWithAddFavorite() {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Select color",
+                        text = stringResource(R.string.select_color),
                         style = FontSemiBold18(Black),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
@@ -395,16 +413,16 @@ fun BrandRatePriceDesc(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = productRes.brand ?: "",
+                    text = productRes.brand.orDefault(),
                     style = FontSemiBold24(Black),
                 )
                 Text(
-                    text = productRes.title ?: "",
+                    text = productRes.title.orDefault(),
                     style = FontRegular11(Gray),
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 CustomRatingBar(
-                    rating = productRes.rate ?: 0.0,
+                    rating = productRes.rate.orDefault(),
                     stars = 5
                 )
             }
@@ -426,7 +444,9 @@ fun BrandRatePriceDesc(
                 }
                 Text(
                     text = "${productRes.price}$",
-                    style = if (productRes.hasDiscount!! > 0f) FontSemiBold16(Gray) else FontSemiBold24(Black),
+                    style = if (productRes.hasDiscount!! > 0f) FontSemiBold16(Gray) else FontSemiBold24(
+                        Black
+                    ),
                     textDecoration = if (productRes.hasDiscount!! > 0f) TextDecoration.LineThrough else TextDecoration.None,
                     textAlign = TextAlign.End
                 )
@@ -435,7 +455,7 @@ fun BrandRatePriceDesc(
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = productRes.description ?: "",
+            text = productRes.description.orDefault(),
             style = FontRegular14(Black),
             textAlign = TextAlign.Justify
         )

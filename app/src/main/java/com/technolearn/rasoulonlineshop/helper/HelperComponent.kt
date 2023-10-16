@@ -1,5 +1,6 @@
 package com.technolearn.rasoulonlineshop.helper
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,6 +25,9 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,11 +38,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
@@ -50,6 +56,7 @@ import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.White
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
+import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -180,70 +187,68 @@ fun Tag(
     tagColor: String = "",
     onClick: () -> Unit = {}
 ) {
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .border(
-                width = 1.dp, when (tagColor) {
-                    "Black" -> {
-                        Black
-                    }
-
-                    "Yellow" -> {
-                        Color.Yellow
-                    }
-
-                    "Red" -> {
-                        Color.Red
-                    }
-
-                    "Blue" -> {
-                        Color.Blue
-                    }
-
-                    "Green" -> {
-                        Color.Green
-                    }
-
-                    else -> {
-                        Gray
-                    }
-                }, shape = RoundedCornerShape(roundCorner)
-            )
+            .padding(12.dp)
             .clip(RoundedCornerShape(roundCorner))
-            .background(
-                when (tagColor) {
-                    "Black" -> {
-                        Black
-                    }
-
-                    "Yellow" -> {
-                        Color.Yellow
-                    }
-
-                    "Red" -> {
-                        Color.Red
-                    }
-
-                    "Blue" -> {
-                        Color.Blue
-                    }
-
-                    "Green" -> {
-                        Color.Green
-                    }
-
-                    else -> {
-                        White
-                    }
-                }
-            )
             .clickable {
                 onClick.invoke()
             },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        backgroundColor = when (tagColor) {
+            "Black" -> {
+                Black
+            }
+
+            "Yellow" -> {
+                Color.Yellow
+            }
+
+            "Red" -> {
+                Color.Red
+            }
+
+            "Blue" -> {
+                Color.Blue
+            }
+
+            "Green" -> {
+                Color.Green
+            }
+
+            else -> {
+                White
+            }
+        },
+        border = BorderStroke(
+            1.dp, when (tagColor) {
+                "Black" -> {
+                    Black
+                }
+
+                "Yellow" -> {
+                    Color.Yellow
+                }
+
+                "Red" -> {
+                    Color.Red
+                }
+
+                "Blue" -> {
+                    Color.Blue
+                }
+
+                "Green" -> {
+                    Color.Green
+                }
+
+                else -> {
+                    Gray
+                }
+            }
+        ),
+        shape = RoundedCornerShape(roundCorner),
+        elevation = 0.dp
     ) {
         Text(
             text = defaultValue,
@@ -433,5 +438,54 @@ fun Label(
         )
     }
 
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomTopAppBar(
+    title: String,
+    style: TextStyle,
+    modifier: Modifier = Modifier,
+    navigationIcon: ImageVector? = null,
+    actionIcons: List<CustomAction>? = null,
+    navigationOnClick: () -> Unit,
+    actionOnclick: (CustomAction) -> Unit,
+) {
+    TopAppBar(
+        title = {
+            Text(
+                text = title,
+                style = style,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = navigationOnClick) {
+                navigationIcon?.let {
+                    Icon(
+                        imageVector = it,
+                        contentDescription = "navigation",
+                    )
+                }
+            }
+        },
+        actions = {
+            if (!actionIcons.isNullOrEmpty()) {
+                actionIcons.forEach { action ->
+                    IconButton(onClick = { actionOnclick(action) }) {
+                        Icon(
+                            imageVector = action.icon,
+                            contentDescription = action.name,
+                        )
+                    }
+                }
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = White
+        ),
+        scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
+    )
 }
 

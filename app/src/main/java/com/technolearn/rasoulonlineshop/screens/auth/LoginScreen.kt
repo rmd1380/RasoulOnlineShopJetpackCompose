@@ -1,4 +1,4 @@
-package com.technolearn.rasoulonlineshop.screens
+package com.technolearn.rasoulonlineshop.screens.auth
 
 import android.util.Patterns
 import androidx.compose.foundation.border
@@ -19,7 +19,6 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,7 +44,6 @@ import com.technolearn.rasoulonlineshop.ui.theme.Error
 import com.technolearn.rasoulonlineshop.ui.theme.FontBold34
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
-import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.Success
 import com.technolearn.rasoulonlineshop.ui.theme.White
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize

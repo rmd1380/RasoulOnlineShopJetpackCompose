@@ -3,6 +3,13 @@
     <string name="no_connection_msg">No Connection</string>
     <string name="network_error_msg">Network Error</string>
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="title_activity_main_product_screen">MainProductScreen</string>
+    <string name="add_to_cart">ADD TO CART</string>
+    <string name="select_size">Select size</string>
+    <string name="select_color">Select color</string>
+    <string name="str_new">New</string>
+    <string name="you_ve_never_seen_it_before">You\'ve never seen it before!</string>
+    <string name="view_all">View all</string>
+    <string name="popular">Popular</string>
+    <string name="best_products_ever">Best products ever</string>
+    <string name="check">Check</string>
 </resources>
