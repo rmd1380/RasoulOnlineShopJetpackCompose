@@ -29,9 +29,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +46,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
@@ -54,9 +57,11 @@ import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold16
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.White
+import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
+import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -93,9 +98,9 @@ fun CustomRatingBar(
 @Composable
 fun AddToFavorite(
     modifier: Modifier,
-    isAddToFavorite: Boolean
+    productRes: ProductRes,
+    onToggleFavorite: (Int) -> Unit,
 ) {
-    var isLiked by remember { mutableStateOf(isAddToFavorite) }
     Card(
         modifier = modifier,
         elevation = 4.dp,
@@ -105,13 +110,13 @@ fun AddToFavorite(
             modifier = Modifier
                 .fillMaxSize(),
             onClick = {
-                isLiked = !isLiked
+                onToggleFavorite(productRes.id)
             }
         ) {
             Icon(
-                painter = painterResource(id = if (isLiked) R.drawable.ic_heart_filled else R.drawable.ic_heart_not_filled),
-                contentDescription = if (isLiked) "Liked" else "Not Liked",
-                tint = if (isLiked) Primary else Gray
+                painter = painterResource(id = if (productRes.isAddToFavorites) R.drawable.ic_heart_filled else R.drawable.ic_heart_not_filled),
+                contentDescription = if (productRes.isAddToFavorites) "Liked" else "Not Liked",
+                tint = if (productRes.isAddToFavorites) Primary else Gray
             )
         }
     }
@@ -164,7 +169,7 @@ fun DropDown(
                 textAlign = TextAlign.Start
             )
             Icon(
-                painter = painterResource(id = R.drawable.ic_down),
+                painter = painterResource(id = R.drawable.ic_chevron_down),
                 contentDescription = "ic_down",
                 tint = Black,
                 modifier = Modifier

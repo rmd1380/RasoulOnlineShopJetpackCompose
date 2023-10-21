@@ -13,4 +13,6 @@ data class ProductRes(
     var label: String? = "",
     var description: String? = "",
     var hasDiscount: Float? = 0f,
+    //
+    var isAddToFavorites: Boolean = false
 )

@@ -11,5 +11,6 @@ object Constants {
     }
     object Argument{
         const val PRODUCT_ID = "PRODUCT_ID"
+        const val WHAT_IS_TITLE = "WHAT_IS_TITLE"
     }
 }

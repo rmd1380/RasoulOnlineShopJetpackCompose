@@ -3,24 +3,26 @@ package com.technolearn.rasoulonlineshop
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
 import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
 import com.technolearn.rasoulonlineshop.navigation.SetupNavGraph
 import com.technolearn.rasoulonlineshop.ui.theme.RasoulOnlineShopTheme
+import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.model.BottomNavigationItem
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var navController: NavHostController
-
+    private val viewModel: ShopViewModel by viewModels()
     companion object{
         val navList = listOf(
             BottomNavigationItem(
@@ -72,7 +74,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(it)
                     ) {
-                        SetupNavGraph(navController = navController)
+                        SetupNavGraph(navController = navController,viewModel)
                     }
                 }
                 // A surface container using the 'background' color from the theme

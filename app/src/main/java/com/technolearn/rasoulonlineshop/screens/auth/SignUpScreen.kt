@@ -241,7 +241,7 @@ fun SignUpScreen(navController: NavController) {
                     textAlign = TextAlign.End,
                 )
                 Icon(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_right),
+                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_right_arrow),
                     contentDescription = "ic_right",
                     tint = Error,
                     modifier = Modifier

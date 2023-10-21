@@ -12,4 +12,12 @@
     <string name="popular">Popular</string>
     <string name="best_products_ever">Best products ever</string>
     <string name="check">Check</string>
+    <string name="shipping_info">Shipping info</string>
+    <string name="support">Support</string>
+    <string name="you_can_also_like_this">You can also like this</string>
+    <string name="categories">Categories</string>
+    <string name="sort_by">Sort by</string>
+    <string name="newest">Newest</string>
+    <string name="lowest_to_high">Price: lowest to high</string>
+    <string name="highest_to_low">Price: highest to low</string>
 </resources>

@@ -70,7 +70,7 @@ fun LoginScreen(navController: NavController) {
                         }
                     }) {
                         Icon(
-                            imageVector = ImageVector.vectorResource(id = R.drawable.ic_back),
+                            imageVector = ImageVector.vectorResource(id = R.drawable.ic_chevron_back),
                             contentDescription = "ic_back",
                         )
                     }

@@ -17,33 +17,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -53,100 +52,39 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.technolearn.rasoulonlineshop.MainActivity
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.AddToFavorite
 import com.technolearn.rasoulonlineshop.helper.CustomButton
 import com.technolearn.rasoulonlineshop.helper.CustomRatingBar
 import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
 import com.technolearn.rasoulonlineshop.helper.DropDown
+import com.technolearn.rasoulonlineshop.helper.ProductItem
 import com.technolearn.rasoulonlineshop.helper.Tag
-import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
 import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
-import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
+import com.technolearn.rasoulonlineshop.ui.theme.FontRegular16
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold16
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold24
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
+import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
+import kotlinx.coroutines.flow.observeOn
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ProductDetailScreen(navController: NavController, productId: Int?) {
-    val testProductList: ArrayList<ProductRes> = arrayListOf()
+fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel: ShopViewModel) {
     val testProduct = ProductRes()
-    testProductList.add(
-        ProductRes(
-            11,
-            "Adidas",
-            "Shirt",
-            arrayListOf(R.drawable.test_image_slider1, R.drawable.test_image_slider2),
-            "",
-            19.9,
-            3.0,
-            "NEW",
-            "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elasticated." +
-                    " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
-            0f
-        )
-    )
-    testProductList.add(
-        ProductRes(
-            12,
-            "Nike",
-            "Shoes",
-            arrayListOf(R.drawable.test_image_slider2, R.drawable.test_image_slider3),
-            "",
-            25.0,
-            3.5,
-            "5%",
-            "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elasticated." +
-                    " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
-            5f
-        )
-    )
-    testProductList.add(
-        ProductRes(
-            13,
-            "D&G",
-            "Shirt",
-            arrayListOf(R.drawable.test_image_slider3, R.drawable.test_image_slider4),
-            "",
-            12.0,
-            2.0,
-            "NEW",
-            "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elasticated." +
-                    " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
-            25f
-        )
-    )
-    testProductList.add(
-        ProductRes(
-            14,
-            "Jack&Jones",
-            "pant",
-            arrayListOf(R.drawable.test_image_slider4, R.drawable.test_image_slider1),
-            "",
-            16.3,
-            4.0,
-            "30%",
-            "Short dress in soft cotton jersey with decorative buttons down the front and a wide, " +
-                    "frill-trimmed square neckline with concealed elasticated." +
-                    " Elasticated seam under the bust and short puff sleeves with a small frill trim.",
-            30f
-        )
-    )
-    testProductList.forEach {
+
+    val productList by viewModel.products.observeAsState()
+
+    productList?.forEach {
         if (it.id == productId) {
             testProduct.id = it.id
             testProduct.brand = it.brand
@@ -157,6 +95,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
             testProduct.rate = it.rate
             testProduct.description = it.description
             testProduct.hasDiscount = it.hasDiscount
+            testProduct.isAddToFavorites=it.isAddToFavorites
         }
     }
     Scaffold(
@@ -182,7 +121,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
             CustomTopAppBar(
                 title = testProduct.title.orDefault(),
                 style = FontSemiBold18(Black),
-                navigationIcon = ImageVector.vectorResource(id = R.drawable.ic_back),
+                navigationIcon = ImageVector.vectorResource(id = R.drawable.ic_chevron_back),
                 actionIcons = arrayListOf(
                     CustomAction("Share", ImageVector.vectorResource(id = R.drawable.ic_share))
                 ),
@@ -200,8 +139,6 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
                     }
                 }
             )
-
-
         }
 
     ) {
@@ -233,7 +170,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
                 }
                 //DropDowns::Size,Color
                 item {
-                    DropdownsWithAddFavorite()
+                    DropdownsWithAddFavorite(testProduct, viewModel)
                     Spacer(modifier = Modifier.height(20.dp))
                 }
                 //Brand-Rate-Price-Desc
@@ -241,6 +178,102 @@ fun ProductDetailScreen(navController: NavController, productId: Int?) {
                     BrandRatePriceDesc(
                         testProduct
                     )
+                    Divider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp), thickness = 0.4.dp, color = Gray
+                    )
+                }
+                //Shipping info
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.shipping_info),
+                            style = FontRegular16(Black)
+                        )
+                        IconButton(onClick = { /*TODO*/ }) {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_right),
+                                contentDescription = "ic_chevron_right",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Divider(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        thickness = 0.4.dp, color = Gray
+                    )
+                }
+                //Support
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.support),
+                            style = FontRegular16(Black)
+                        )
+                        IconButton(onClick = { /*TODO*/ }) {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_right),
+                                contentDescription = "ic_chevron_right",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Divider(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        thickness = 0.4.dp, color = Gray
+                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                }
+                //youCanAlsoLikeThisText
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+
+                        Text(
+                            text = stringResource(R.string.you_can_also_like_this),
+                            style = FontSemiBold18(Black),
+                        )
+
+                        Text(
+                            text = "${productList?.size} items",
+                            style = FontRegular11(Gray),
+                            modifier = Modifier.clickable {
+                            }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(18.dp))
+                }
+                //Product
+                item {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
+                        items(productList?: arrayListOf()) { productRes ->
+                            ProductItem(
+                                productRes = productRes,
+                                navController = navController,
+                                viewModel
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -266,21 +299,20 @@ fun SliderItem(@DrawableRes sliderRes: Int) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DropdownsWithAddFavorite() {
+fun DropdownsWithAddFavorite(productRes: ProductRes, viewModel: ShopViewModel) {
     val sheetState = rememberModalBottomSheetState()
 
-    var showSizeBottomSheet by remember { mutableStateOf(false) }
-    var showColorBottomSheet by remember { mutableStateOf(false) }
-    var isAddToFavorite by remember { mutableStateOf(false) }
+    var showSizeBottomSheet by rememberSaveable { mutableStateOf(false) }
+    var showColorBottomSheet by rememberSaveable { mutableStateOf(false) }
 
-    var isDropDownSizeFocused by remember { mutableStateOf(false) }
-    var isDropDownColorFocused by remember { mutableStateOf(false) }
+    var isDropDownSizeFocused by rememberSaveable { mutableStateOf(false) }
+    var isDropDownColorFocused by rememberSaveable { mutableStateOf(false) }
 
     val buttonColorLabels = listOf("Black", "Yellow", "Red", "Blue", "Green")
-    var selectedColorText by remember { mutableStateOf("Black") }
+    var selectedColorText by rememberSaveable { mutableStateOf("Black") }
 
     val buttonSizeLabels = listOf("XL", "L", "M", "S", "XS")
-    var selectedSizeText by remember { mutableStateOf("Size") }
+    var selectedSizeText by rememberSaveable { mutableStateOf("Size") }
 
 
     Box(
@@ -313,15 +345,20 @@ fun DropdownsWithAddFavorite() {
                 showColorBottomSheet = true
             }
             Spacer(modifier = Modifier.width(20.dp))
+//            AddToFavorite(
+//                modifier = Modifier
+//                    .size(36.dp)
+//                    .weight(0.25f),
+////                isAddToFavorite = isAddToFavorite
+//            )
             AddToFavorite(
                 modifier = Modifier
-                    .clickable {
-                        isAddToFavorite = !isAddToFavorite
-                    }
                     .size(36.dp)
                     .weight(0.25f),
-                isAddToFavorite = isAddToFavorite
-            )
+                productRes = productRes,
+            ) { productId ->
+                viewModel.toggleAddToFavorites(productId)
+            }
         }
         if (showSizeBottomSheet) {
             ModalBottomSheet(
