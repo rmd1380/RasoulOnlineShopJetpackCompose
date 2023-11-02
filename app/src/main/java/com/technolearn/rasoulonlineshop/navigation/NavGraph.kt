@@ -1,6 +1,7 @@
 package com.technolearn.rasoulonlineshop.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,14 +22,14 @@ import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 @Composable
 fun SetupNavGraph(
     navController: NavHostController,
-    viewModel: ShopViewModel
+    viewModel: ShopViewModel= hiltViewModel()
 ) {
     NavHost(
         navController = navController,
         startDestination = NavigationBarItemsGraph.Home.route
     ) {
         composable(route = Screen.SignUpScreen.route) {
-            SignUpScreen(navController = navController)
+//            SignUpScreen(navController = navController)
         }
 
         composable(
@@ -41,16 +42,17 @@ fun SetupNavGraph(
             ProductScreen(navController = navController, viewModel)
         }
         composable(route = NavigationBarItemsGraph.Shop.route) {
-            ShopScreen(navController = navController)
+            ShopScreen(navController = navController,viewModel)
         }
         composable(route = NavigationBarItemsGraph.Bag.route) {
             BagScreen(navController = navController)
         }
         composable(route = NavigationBarItemsGraph.Favorites.route) {
-            FavoritesScreen(navController = navController)
+            FavoritesScreen(navController = navController, viewModel)
         }
         composable(route = NavigationBarItemsGraph.Profile.route) {
-            ProfileScreen(navController = navController)
+            SignUpScreen(navController = navController,viewModel)
+//            ProfileScreen(navController = navController)
         }
         composable(
             route = Screen.ProductDetailScreen.route,

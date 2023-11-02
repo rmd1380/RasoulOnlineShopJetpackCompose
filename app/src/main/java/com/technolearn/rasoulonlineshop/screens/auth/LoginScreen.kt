@@ -90,7 +90,7 @@ fun LoginScreen(navController: NavController) {
                     .fillMaxWidth()
                     .padding(8.dp, 16.dp, 8.dp, 0.dp)
             ) {
-                ///////SignUpText
+                ///////LoginText
                 Text(
                     text = "Login",
                     modifier = Modifier
@@ -242,5 +242,5 @@ fun LoginScreen(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun LoginViewPreview() {
-    SignUpScreen(rememberNavController())
+    LoginScreen(rememberNavController())
 }

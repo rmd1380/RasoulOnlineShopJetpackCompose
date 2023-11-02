@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -28,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,8 +50,10 @@ import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular16
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
+import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
+import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +73,7 @@ fun MoreProductScreen(
     )
     var selectedFilterText by rememberSaveable { mutableStateOf("Price: lowest to high") }
 
-    val productList by viewModel.products.observeAsState()
+    val productList by remember { viewModel.getAllProduct(0,10)}.observeAsState()
     Scaffold(
         backgroundColor = Background,
         bottomBar = {
@@ -224,25 +226,25 @@ fun MoreProductScreen(
                     ) {
                         when (whatIsTitle) {
                             "New" -> {
-                                items(productList?.filter { it.label == "NEW" }.orEmpty().size) { index ->
-                                    val filteredProduct =
-                                        productList?.filter { it.label == "NEW" }.orEmpty()[index]
+                                items(productList?.data?.data?.filter { it.label == "NEW" }?.size.orDefault()) { index ->
                                     ProductItemHorizontal(
-                                        productRes = filteredProduct,
+                                        productRes = productList?.data?.data?.filter { it.label == "NEW" }?.get(index)?: ProductRes(),
                                         navController = navController,
-                                        viewModel
+                                        isLiked = {
+                                            viewModel.toggleAddToFavorites( productList?.data?.data?.get(index)?.id.orDefault())
+                                        }
                                     )
                                 }
                             }
 
                             "Popular" -> {
-                                items( productList?.filter { it.rate!! >= 3.5 }.orEmpty().size) { index ->
-                                    val filteredProduct =
-                                        productList?.filter { it.rate!! >= 3.5 }.orEmpty()[index]
+                                items( productList?.data?.data?.filter  { it.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
                                     ProductItemHorizontal(
-                                        productRes = filteredProduct,
+                                        productRes = productList?.data?.data?.filter  { it.rate.orDefault() >= 3.5 }?.sortedByDescending { it.rate }?.get(index)?: ProductRes(),
                                         navController = navController,
-                                        viewModel
+                                        isLiked = {
+                                            viewModel.toggleAddToFavorites( productList?.data?.data?.get(index)?.id.orDefault())
+                                        }
                                     )
                                 }
                             }
@@ -258,25 +260,25 @@ fun MoreProductScreen(
                     ) {
                         when (whatIsTitle) {
                             "New" -> {
-                                items(productList?.filter { it.label == "NEW" }.orEmpty().size) { index ->
-                                    val filteredProduct =
-                                        productList?.filter { it.label == "NEW" }.orEmpty()[index]
+                                items(productList?.data?.data?.filter { it.label == "NEW" }?.size.orDefault()) { index ->
                                     ProductItem(
-                                        productRes = filteredProduct,
+                                        productRes = productList?.data?.data?.filter { it.label == "NEW" }?.get(index)?: ProductRes(),
                                         navController = navController,
-                                        viewModel
+                                        isLiked = {
+                                            viewModel.toggleAddToFavorites( productList?.data?.data?.get(index)?.id.orDefault())
+                                        }
                                     )
                                 }
                             }
 
                             "Popular" -> {
-                                items( productList?.filter { it.rate!! >= 3.5 }.orEmpty().size) { index ->
-                                    val filteredProduct =
-                                        productList?.filter { it.rate!! >= 3.5 }.orEmpty()[index]
+                                items( productList?.data?.data?.filter { it.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
                                     ProductItem(
-                                        productRes = filteredProduct,
+                                        productRes = productList?.data?.data?.filter { it.rate.orDefault() >= 3.5 }?.sortedByDescending { it.rate }?.get(index)?: ProductRes(),
                                         navController = navController,
-                                        viewModel
+                                        isLiked = {
+                                            viewModel.toggleAddToFavorites( productList?.data?.data?.get(index)?.id.orDefault())
+                                        }
                                     )
                                 }
                             }

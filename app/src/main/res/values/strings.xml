@@ -20,4 +20,5 @@
     <string name="newest">Newest</string>
     <string name="lowest_to_high">Price: lowest to high</string>
     <string name="highest_to_low">Price: highest to low</string>
+    <string name="favorites">Favorites</string>
 </resources>

@@ -23,10 +23,12 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.progressSemantics
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -52,12 +54,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.skydoves.landscapist.glide.GlideImage
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.AddToFavorite
 import com.technolearn.rasoulonlineshop.helper.CustomButton
 import com.technolearn.rasoulonlineshop.helper.CustomRatingBar
 import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
 import com.technolearn.rasoulonlineshop.helper.DropDown
+import com.technolearn.rasoulonlineshop.helper.LoadingInColumn
 import com.technolearn.rasoulonlineshop.helper.ProductItem
 import com.technolearn.rasoulonlineshop.helper.Tag
 import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
@@ -73,31 +77,19 @@ import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
+import com.technolearn.rasoulonlineshop.vo.enums.Status
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import kotlinx.coroutines.flow.observeOn
+import timber.log.Timber
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel: ShopViewModel) {
-    val testProduct = ProductRes()
 
-    val productList by viewModel.products.observeAsState()
+    val productRes by remember { viewModel.getProductById(productId.orDefault())}.observeAsState()
+    val productList by remember { viewModel.getAllProduct(0,10)}.observeAsState()
 
-    productList?.forEach {
-        if (it.id == productId) {
-            testProduct.id = it.id
-            testProduct.brand = it.brand
-            testProduct.title = it.title
-            testProduct.image = it.image
-            testProduct.addDate = it.addDate
-            testProduct.price = it.price
-            testProduct.rate = it.rate
-            testProduct.description = it.description
-            testProduct.hasDiscount = it.hasDiscount
-            testProduct.isAddToFavorites=it.isAddToFavorites
-        }
-    }
     Scaffold(
         backgroundColor = Background,
         bottomBar = {
@@ -119,7 +111,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
         },
         topBar = {
             CustomTopAppBar(
-                title = testProduct.title.orDefault(),
+                title = productRes?.data?.data?.title.orDefault(),
                 style = FontSemiBold18(Black),
                 navigationIcon = ImageVector.vectorResource(id = R.drawable.ic_chevron_back),
                 actionIcons = arrayListOf(
@@ -153,30 +145,53 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                     .fillMaxWidth(),
                 contentPadding = PaddingValues(bottom = 32.dp)
             ) {
-//                SliderItem(sliderRes = testProduct[index].image[0])
+//                SliderItem(sliderRes = productRes[index].image[0])
                 //Slider
-                item {
-                    val pagerState = rememberPagerState(pageCount = {
-                        testProduct.image.size
-                    })
-                    HorizontalPager(
-                        state = pagerState,
-                        key = { index: Int -> testProduct.image[index] }
-                    ) { page ->
-                        SliderItem(sliderRes = testProduct.image[page])
+                when(productRes?.status){
+                    Status.LOADING -> {
+                        item {
+                            LoadingInColumn(
+                                Modifier
+                                    .fillMaxSize()
+                                    .height(536.dp)
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
+                        }
+                        Timber.d("productResDetail::LOADING${productRes}")
                     }
+                    Status.SUCCESS -> {
+                        item {
+                            val pagerState = rememberPagerState(pageCount = {
+                                productRes?.data?.data?.image?.size.orDefault()
+                            })
+                            HorizontalPager(
+                                state = pagerState,
+                                key = { index: Int -> productRes?.data?.data?.image?.get(index).orDefault() }
+                            ) { page ->
+                                SliderItem(sliderRes =productRes?.data?.data?.image?.get(page).orDefault())
+                            }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                        Timber.d("productResDetail::SUCCESS${productRes?.data}")
+                    }
+                    Status.ERROR -> {
+                        Timber.d("productResDetail::ERROR${productRes?.message}")
+                    }
+                    else -> {
+
+                    }
                 }
+
                 //DropDowns::Size,Color
                 item {
-                    DropdownsWithAddFavorite(testProduct, viewModel)
+                    DropdownsWithAddFavorite(productRes?.data?.data?: ProductRes(), viewModel)
                     Spacer(modifier = Modifier.height(20.dp))
                 }
                 //Brand-Rate-Price-Desc
                 item {
                     BrandRatePriceDesc(
-                        testProduct
+                        productRes?.data?.data?:ProductRes()
                     )
                     Divider(
                         modifier = Modifier
@@ -255,7 +270,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                         )
 
                         Text(
-                            text = "${productList?.size} items",
+                            text = "${productList?.data?.data?.size} items",
                             style = FontRegular11(Gray),
                             modifier = Modifier.clickable {
                             }
@@ -266,11 +281,18 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                 //Product
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        items(productList?: arrayListOf()) { productRes ->
+                        items(productList?.data?.data?.size.orDefault()) { productRes ->
                             ProductItem(
-                                productRes = productRes,
+                                productRes = productList?.data?.data?.get(productRes)
+                                    ?: ProductRes(),
                                 navController = navController,
-                                viewModel
+                                isLiked = {
+                                    viewModel.toggleAddToFavorites(
+                                        productList?.data?.data?.get(
+                                            productRes
+                                        )?.id.orDefault()
+                                    )
+                                }
                             )
                         }
                     }
@@ -281,19 +303,38 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
 }
 
 @Composable
-fun SliderItem(@DrawableRes sliderRes: Int) {
+fun SliderItem(sliderRes: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        Image(
-            painter = painterResource(id = sliderRes),
-            contentDescription = null,
+        GlideImage(
+            imageModel = sliderRes,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(536.dp),
-            contentScale = ContentScale.Crop
-        )
+            contentScale = ContentScale.Crop,
+            loading = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(15.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = CenterHorizontally
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .progressSemantics()
+                            .size(24.dp),
+                        color = Black,
+                        strokeWidth = 2.dp
+                    )
+                }
+            },
+            // shows an error text message when request failed.
+            failure = {
+                Text(text = "image request failed.")
+            })
     }
 }
 
@@ -468,10 +509,10 @@ fun BrandRatePriceDesc(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.Center
             ) {
-                if (productRes.hasDiscount!! > 0f) {
+                if (productRes.hasDiscount.orDefault() > 0f) {
                     val discountAmount =
-                        (productRes.price?.times(productRes.hasDiscount!!))?.div(100.0)
-                    val finalPrice = productRes.price?.minus(discountAmount!!)
+                        (productRes.price?.times(productRes.hasDiscount.orDefault()))?.div(100.0)
+                    val finalPrice = productRes.price?.minus(discountAmount.orDefault())
                     Text(
                         modifier = Modifier.padding(start = 4.dp),
                         text = "${finalPrice}$",
@@ -481,10 +522,10 @@ fun BrandRatePriceDesc(
                 }
                 Text(
                     text = "${productRes.price}$",
-                    style = if (productRes.hasDiscount!! > 0f) FontSemiBold16(Gray) else FontSemiBold24(
+                    style = if (productRes.hasDiscount.orDefault() > 0f) FontSemiBold16(Gray) else FontSemiBold24(
                         Black
                     ),
-                    textDecoration = if (productRes.hasDiscount!! > 0f) TextDecoration.LineThrough else TextDecoration.None,
+                    textDecoration = if (productRes.hasDiscount.orDefault() > 0f) TextDecoration.LineThrough else TextDecoration.None,
                     textAlign = TextAlign.End
                 )
 

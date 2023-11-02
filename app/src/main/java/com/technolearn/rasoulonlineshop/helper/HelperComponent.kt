@@ -8,10 +8,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -38,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -57,6 +60,8 @@ import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold16
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.White
+import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
+import com.technolearn.rasoulonlineshop.util.Extensions.orFalse
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
@@ -70,8 +75,15 @@ fun CustomRatingBar(
     rating: Double = 0.0,
     stars: Int = 5,
 ) {
-    val filledStars = floor(rating).toInt()
-    val unfilledStars = (stars - ceil(rating)).toInt()
+    val filledStars = rating.toInt()
+    val remainder = rating - filledStars
+    var hasHalfStar = false
+    val unfilledStars = stars - filledStars
+
+    if (remainder > 0) {
+        hasHalfStar = true
+    }
+
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
         repeat(filledStars) {
             Image(
@@ -80,7 +92,16 @@ fun CustomRatingBar(
                 modifier = Modifier.size(16.dp)
             )
         }
-        repeat(unfilledStars) {
+
+        if (hasHalfStar) {
+            Image(
+                painter = painterResource(R.drawable.ic_start_half),
+                contentDescription = null,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+
+        repeat(unfilledStars - if (hasHalfStar) 1 else 0) {
             Image(
                 painter = painterResource(R.drawable.ic_start_inactive),
                 contentDescription = null,
@@ -89,16 +110,19 @@ fun CustomRatingBar(
         }
         Text(
             modifier = Modifier.padding(start = 2.dp),
-            text = "(${rating})",
+            text = "($rating)",
             style = FontRegular11(Gray),
         )
     }
 }
 
+
+
+
 @Composable
 fun AddToFavorite(
     modifier: Modifier,
-    productRes: ProductRes,
+    productRes: ProductRes?,
     onToggleFavorite: (Int) -> Unit,
 ) {
     Card(
@@ -110,13 +134,13 @@ fun AddToFavorite(
             modifier = Modifier
                 .fillMaxSize(),
             onClick = {
-                onToggleFavorite(productRes.id)
+                onToggleFavorite(productRes?.id.orDefault())
             }
         ) {
             Icon(
-                painter = painterResource(id = if (productRes.isAddToFavorites) R.drawable.ic_heart_filled else R.drawable.ic_heart_not_filled),
-                contentDescription = if (productRes.isAddToFavorites) "Liked" else "Not Liked",
-                tint = if (productRes.isAddToFavorites) Primary else Gray
+                painter = painterResource(id = if (productRes?.isAddToFavorites.orFalse()) R.drawable.ic_heart_filled else R.drawable.ic_heart_not_filled),
+                contentDescription = if (productRes?.isAddToFavorites.orFalse()) "Liked" else "Not Liked",
+                tint = if (productRes?.isAddToFavorites.orFalse()) Primary else Gray
             )
         }
     }
@@ -449,7 +473,7 @@ fun Label(
 @Composable
 fun CustomTopAppBar(
     title: String,
-    style: TextStyle,
+    style: TextStyle?,
     modifier: Modifier = Modifier,
     navigationIcon: ImageVector? = null,
     actionIcons: List<CustomAction>? = null,
@@ -458,12 +482,14 @@ fun CustomTopAppBar(
 ) {
     TopAppBar(
         title = {
-            Text(
-                text = title,
-                style = style,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (style != null) {
+                Text(
+                    text = title,
+                    style = style,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         },
         navigationIcon = {
             IconButton(onClick = navigationOnClick) {
@@ -492,5 +518,18 @@ fun CustomTopAppBar(
         ),
         scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
     )
+}
+
+@Composable
+fun LoadingInColumn(modifier: Modifier, count: Int = 1) {
+
+    Column(
+        modifier = modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator()
+    }
 }
 

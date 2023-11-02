@@ -3,7 +3,7 @@ package com.technolearn.rasoulonlineshop.util
 object Constants {
 
     object Base {
-        const val MAIN_URL = "https://onlineshop.holosen.net:9090/"
+        const val MAIN_URL = "https://10.0.2.2:8080/"
     }
 
     object Prefs {

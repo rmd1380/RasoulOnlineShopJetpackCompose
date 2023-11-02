@@ -17,7 +17,9 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,9 +39,10 @@ import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.White
+import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun OrderScreen(navController: NavController) {
 
     Scaffold(
         backgroundColor = White,
@@ -53,6 +56,13 @@ fun ProfileScreen(navController: NavController) {
             CustomTopAppBar(
                 title = "",
                 style = null,
+                navigationIcon = ImageVector.vectorResource(R.drawable.ic_chevron_back),
+                actionIcons = listOf(
+                    CustomAction(
+                        "search",
+                        ImageVector.vectorResource(R.drawable.ic_search)
+                    )
+                ),
                 navigationOnClick = { /*TODO*/ },
                 actionOnclick = {}
             )
@@ -68,7 +78,7 @@ fun ProfileScreen(navController: NavController) {
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "My profile",
+                    text = "My Order",
                     style = FontBold34(Black),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -108,6 +118,6 @@ fun ProfileScreen(navController: NavController) {
 
 @Preview(showBackground = true)
 @Composable
-fun ProfileViewPreview() {
-    ProfileScreen(rememberNavController())
+fun orderViewPreview() {
+    OrderScreen(rememberNavController())
 }

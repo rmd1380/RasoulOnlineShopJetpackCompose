@@ -3,10 +3,14 @@ package com.technolearn.rasoulonlineshop.di.module
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.room.Room
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.gson.GsonBuilder
 import com.technolearn.rasoulonlineshop.BuildConfig
 import com.technolearn.rasoulonlineshop.api.ApiService
+import com.technolearn.rasoulonlineshop.db.AppDatabase
+import com.technolearn.rasoulonlineshop.db.dao.FavoritesDao
+import com.technolearn.rasoulonlineshop.di.UnsafeSSLConfig
 import com.technolearn.rasoulonlineshop.util.Constants
 import dagger.Module
 import dagger.Provides
@@ -67,9 +71,24 @@ class AppModule {
                 GsonConverterFactory.create(
                     GsonBuilder().setLenient().create()
                 )
-            ).client(okHttpClient).build()
-
+            )
+            .client(UnsafeSSLConfig.unsafeOkHttpClient.build()).build()
         return retrofit.create(ApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideAppDB(application: Application): AppDatabase {
+        return Room.databaseBuilder(
+            application, AppDatabase::class.java, "rasoul_online_shop_db"
+        ).fallbackToDestructiveMigration().build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideFavoriteDao(appDatabase: AppDatabase): FavoritesDao {
+        return appDatabase.favoritesDao()
+    }
+
 
 }

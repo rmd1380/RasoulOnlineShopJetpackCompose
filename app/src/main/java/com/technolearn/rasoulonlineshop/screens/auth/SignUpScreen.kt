@@ -21,7 +21,9 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,16 +33,19 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomButton
+import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
 import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
@@ -50,12 +55,20 @@ import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Success
 import com.technolearn.rasoulonlineshop.ui.theme.White
+import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
+import com.technolearn.rasoulonlineshop.vo.enums.Status
+import com.technolearn.rasoulonlineshop.vo.req.SignUpReq
+import timber.log.Timber
 
 @Composable
-fun SignUpScreen(navController: NavController) {
+fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
     val contextForToast = LocalContext.current.applicationContext
+//    val sliderData by remember { viewModel.register(createRequest()) }.observeAsState()
+    val registerStatus by remember {viewModel.registerStatus}.observeAsState()
+
+    val lifecycleOwner = LocalLifecycleOwner.current
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -279,9 +292,13 @@ fun SignUpScreen(navController: NavController) {
                         }
 
                         !nameHasError && !emailHasError && !passwordHasError -> {
-
-                            navController.navigate(Screen.ProductScreen.route)
-
+                            viewModel.register(
+                                SignUpReq(
+                                    username = name,
+                                    password = password,
+                                    email = email
+                                )
+                            )
                         }
                     }
                 },
@@ -293,6 +310,22 @@ fun SignUpScreen(navController: NavController) {
                 size = ButtonSize.BIG,
                 roundCorner = 25.dp,
             )
+            when (registerStatus?.status) {
+                Status.LOADING -> {
+                    Timber.d("Register:::LOADING:::")
+                }
+                Status.SUCCESS -> {
+                    Timber.d("Register:::SUCCESS:::${registerStatus?.data}")
+                    navController.navigate(NavigationBarItemsGraph.Home.route)
+                }
+                Status.ERROR -> {
+                    Timber.d("Register:::ERROR:::${registerStatus}")
+
+                }
+                else -> {
+
+                }
+            }
             Spacer(modifier = Modifier.height(125.dp))
             Text(
                 text = "Or sign up with social account",
@@ -307,5 +340,5 @@ fun SignUpScreen(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun SignUpPreview() {
-    SignUpScreen(rememberNavController())
+    SignUpScreen(rememberNavController(), viewModel())
 }

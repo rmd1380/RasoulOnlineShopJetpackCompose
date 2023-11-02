@@ -22,7 +22,6 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var navController: NavHostController
-    private val viewModel: ShopViewModel by viewModels()
     companion object{
         val navList = listOf(
             BottomNavigationItem(
@@ -74,7 +73,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(it)
                     ) {
-                        SetupNavGraph(navController = navController,viewModel)
+                        SetupNavGraph(navController = navController)
                     }
                 }
                 // A surface container using the 'background' color from the theme
