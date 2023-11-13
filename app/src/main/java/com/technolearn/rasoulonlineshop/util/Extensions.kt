@@ -1,17 +1,15 @@
 package com.technolearn.rasoulonlineshop.util
 
-import android.app.Activity
 import android.content.Context
 import android.content.res.Resources
 import android.net.ConnectivityManager
-import android.view.View
-import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.technolearn.rasoulonlineshop.BuildConfig
 import com.technolearn.rasoulonlineshop.R
-import saman.zamani.persiandate.PersianDate
-import saman.zamani.persiandate.PersianDateFormat
 import timber.log.Timber
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 object Extensions {
 
@@ -24,7 +22,7 @@ object Extensions {
     fun Long?.orDefault() = this ?: 0L
     fun String?.orDefault() = this ?: ""
     fun String?.orUnknown() = if (this.isNullOrEmpty()) {
-        "نامشخص"
+        "Unknown"
     } else {
         this
     }
@@ -50,57 +48,17 @@ object Extensions {
     fun Context.toast(msg: String){
         showToast(this, msg)
     }
-    fun getHumanReadableDate(date: Long?): String {
-        if (date != null) {
-            val persianDateFormat = PersianDateFormat("j F Y")
-            return persianDateFormat.format(PersianDate(date))
-        }
-
-        return ""
-    }
-
     fun Long.toHumanReadableDate(): String {
-        return try {
-            val persianDateFormat = PersianDateFormat("j F Y")
-            persianDateFormat.format(PersianDate(this))
-        } catch (ex: Exception) {
-            ""
-        }
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val date = Date(this * 1000)
+        return sdf.format(date)
     }
+
     fun Context.isNetworkConnected(): Boolean {
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
         return cm!!.activeNetworkInfo != null && cm.activeNetworkInfo!!.isConnected
     }
 
-    fun View.openKeyboard() {
-        val imm = context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0)
-    }
-
-    fun View.hideKeyboard() {
-        val imm = context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(windowToken, 0)
-    }
-
-    fun View.visible() {
-        this.visibility = View.VISIBLE
-    }
-
-    fun View.invisible() {
-        this.visibility = View.INVISIBLE
-    }
-
-    fun View.gone() {
-        this.visibility = View.GONE
-    }
-
-    fun View.visibility(visible: Boolean) {
-        if (visible) {
-            this.visibility = View.VISIBLE
-        } else {
-            this.visibility = View.GONE
-        }
-    }
 
     fun showToast(context: Context, msg: String) {
         Toast.makeText(context, msg, Toast.LENGTH_LONG).show()

@@ -13,14 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -30,11 +28,8 @@ import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
 import com.technolearn.rasoulonlineshop.helper.ProfileItem
 import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
-import com.technolearn.rasoulonlineshop.screens.auth.LoginScreen
-import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontBold34
-import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
@@ -118,6 +113,6 @@ fun OrderScreen(navController: NavController) {
 
 @Preview(showBackground = true)
 @Composable
-fun orderViewPreview() {
+fun OrderViewPreview() {
     OrderScreen(rememberNavController())
 }

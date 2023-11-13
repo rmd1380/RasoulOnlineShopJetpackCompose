@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -40,11 +41,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.technolearn.rasoulonlineshop.MainActivity
+import com.technolearn.rasoulonlineshop.MainActivity.Companion.minTimeForBeNew
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
 import com.technolearn.rasoulonlineshop.helper.ProductItem
 import com.technolearn.rasoulonlineshop.helper.ProductItemHorizontal
 import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
+import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
@@ -65,15 +68,24 @@ fun MoreProductScreen(
     var isList by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     var showFilterOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
     val filterOptions = arrayListOf(
         stringResource(id = R.string.popular),
         stringResource(id = R.string.newest),
         stringResource(id = R.string.lowest_to_high),
         stringResource(id = R.string.highest_to_low),
     )
-    var selectedFilterText by rememberSaveable { mutableStateOf("Price: lowest to high") }
+    var selectedFilterText by rememberSaveable {
+        mutableStateOf(
+            when (whatIsTitle) {
+                context.getString(R.string.str_new) -> context.getString(R.string.newest)
+                context.getString(R.string.popular) -> context.getString(R.string.popular)
+                else -> ""
+            }
+        )
+    }
 
-    val productList by remember { viewModel.getAllProduct(0,10)}.observeAsState()
+    val productList by remember { viewModel.allProduct }.observeAsState()
     Scaffold(
         backgroundColor = Background,
         bottomBar = {
@@ -103,7 +115,13 @@ fun MoreProductScreen(
                         ImageVector.vectorResource(R.drawable.ic_search)
                     )
                 ),
-                navigationOnClick = { /*TODO*/ },
+                navigationOnClick = {
+                    navController.navigate(NavigationBarItemsGraph.Home.route) {
+                        popUpTo(NavigationBarItemsGraph.Home.route) {
+                            inclusive = true
+                        }
+                    }
+                },
                 actionOnclick = { /*TODO*/ }
             )
         }
@@ -224,32 +242,58 @@ fun MoreProductScreen(
                             .padding(horizontal = 16.dp),
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
-                        when (whatIsTitle) {
-                            "New" -> {
-                                items(productList?.data?.data?.filter { it.label == "NEW" }?.size.orDefault()) { index ->
+                        when (selectedFilterText) {
+                            context.getString(R.string.newest) -> {
+                                items(productList?.data?.data?.size.orDefault()) { index ->
                                     ProductItemHorizontal(
-                                        productRes = productList?.data?.data?.filter { it.label == "NEW" }?.get(index)?: ProductRes(),
-                                        navController = navController,
-                                        isLiked = {
-                                            viewModel.toggleAddToFavorites( productList?.data?.data?.get(index)?.id.orDefault())
-                                        }
+                                        productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
+                                            ?.get(index) ?: ProductRes(),
+                                        navController,
+                                        isNew = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
+                                            ?.get(index)?.addDate.orDefault() > minTimeForBeNew,
+                                        viewModel = viewModel
                                     )
                                 }
                             }
 
-                            "Popular" -> {
-                                items( productList?.data?.data?.filter  { it.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
+                            context.getString(R.string.popular) -> {
+                                items(productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
                                     ProductItemHorizontal(
-                                        productRes = productList?.data?.data?.filter  { it.rate.orDefault() >= 3.5 }?.sortedByDescending { it.rate }?.get(index)?: ProductRes(),
+                                        productRes = productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
+                                            ?.sortedByDescending { productRes -> productRes.rate }
+                                            ?.get(index)
+                                            ?: ProductRes(),
                                         navController = navController,
-                                        isLiked = {
-                                            viewModel.toggleAddToFavorites( productList?.data?.data?.get(index)?.id.orDefault())
-                                        }
+                                        isNew = false,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
+
+                            context.getString(R.string.highest_to_low) -> {
+                                items(productList?.data?.data?.size.orDefault()) { index ->
+                                    ProductItemHorizontal(
+                                        productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.price }
+                                            ?.get(index) ?: ProductRes(),
+                                        navController = navController,
+                                        isNew = false,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
+
+                            context.getString(R.string.lowest_to_high) -> {
+                                items(productList?.data?.data?.size.orDefault()) { index ->
+                                    ProductItemHorizontal(
+                                        productRes = productList?.data?.data?.sortedBy { productRes -> productRes.price }
+                                            ?.get(index) ?: ProductRes(),
+                                        navController = navController,
+                                        isNew = false,
+                                        viewModel = viewModel
                                     )
                                 }
                             }
                         }
-
                     }
                 } else {
                     LazyVerticalGrid(
@@ -258,27 +302,54 @@ fun MoreProductScreen(
                             .padding(top = 16.dp),
                         columns = GridCells.Fixed(2)
                     ) {
-                        when (whatIsTitle) {
-                            "New" -> {
-                                items(productList?.data?.data?.filter { it.label == "NEW" }?.size.orDefault()) { index ->
+                        when (selectedFilterText) {
+                            context.getString(R.string.newest) -> {
+                                items(productList?.data?.data?.size.orDefault()) { index ->
                                     ProductItem(
-                                        productRes = productList?.data?.data?.filter { it.label == "NEW" }?.get(index)?: ProductRes(),
+                                        productRes = productList?.data?.data?.get(index)
+                                            ?: ProductRes(),
                                         navController = navController,
-                                        isLiked = {
-                                            viewModel.toggleAddToFavorites( productList?.data?.data?.get(index)?.id.orDefault())
-                                        }
+                                        isNew = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
+                                            ?.get(index)?.addDate.orDefault() > minTimeForBeNew,
+                                        viewModel = viewModel
                                     )
                                 }
                             }
 
-                            "Popular" -> {
-                                items( productList?.data?.data?.filter { it.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
+                            context.getString(R.string.popular) -> {
+                                items(productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
                                     ProductItem(
-                                        productRes = productList?.data?.data?.filter { it.rate.orDefault() >= 3.5 }?.sortedByDescending { it.rate }?.get(index)?: ProductRes(),
+                                        productRes = productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
+                                            ?.sortedByDescending { productRes -> productRes.rate }
+                                            ?.get(index)
+                                            ?: ProductRes(),
                                         navController = navController,
-                                        isLiked = {
-                                            viewModel.toggleAddToFavorites( productList?.data?.data?.get(index)?.id.orDefault())
-                                        }
+                                        isNew = false,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
+
+                            context.getString(R.string.highest_to_low) -> {
+                                items(productList?.data?.data?.size.orDefault()) { index ->
+                                    ProductItem(
+                                        productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.price }
+                                            ?.get(index) ?: ProductRes(),
+                                        navController = navController,
+                                        isNew = false,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
+
+                            context.getString(R.string.lowest_to_high) -> {
+                                items(productList?.data?.data?.size.orDefault()) { index ->
+                                    ProductItem(
+                                        productRes = productList?.data?.data?.sortedBy { productRes -> productRes.price }
+                                            ?.get(index) ?: ProductRes(),
+                                        navController = navController,
+                                        isNew = false,
+                                        viewModel = viewModel
                                     )
                                 }
                             }

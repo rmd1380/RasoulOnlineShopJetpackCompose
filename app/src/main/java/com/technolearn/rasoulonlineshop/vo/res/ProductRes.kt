@@ -1,21 +1,20 @@
 package com.technolearn.rasoulonlineshop.vo.res
 
-import androidx.annotation.DrawableRes
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity(tableName = "favorites")
 data class ProductRes(
-    @PrimaryKey var id: Int = 0,
-    var brand: String?=null,
-    var title: String?=null,
-    var image: ArrayList<String>?=null,
-    var addDate: String?=null,
-    var price: Double?=null,
-    var rate: Double?=null,
-    var label: String?=null,
-    var description: String?=null,
-    var hasDiscount: Float?=null,
+    var id: Int = 0,
+    var brand: String? = null,
+    var title: String? = null,
+    var image: ArrayList<String> = arrayListOf(),
+    var threeDModel: String? = null,
+    var addDate: Long? = null,
+    var price: Double? = null,
+    var rate: Double? = null,
+    var description: String? = null,
+    var hasDiscount: Float? = null,
+    var category: CategoryRes? = CategoryRes(),
+    var colors: ArrayList<ColorRes> = arrayListOf(),
+    var sizes: ArrayList<SizeRes> = arrayListOf(),
+//    var invoiceItems: ArrayList<InvoiceItems> = arrayListOf(),
     //
     var isAddToFavorites: Boolean = false
 )

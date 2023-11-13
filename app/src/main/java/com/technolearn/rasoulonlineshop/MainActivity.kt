@@ -3,19 +3,16 @@ package com.technolearn.rasoulonlineshop
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
 import com.technolearn.rasoulonlineshop.navigation.SetupNavGraph
 import com.technolearn.rasoulonlineshop.ui.theme.RasoulOnlineShopTheme
-import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.model.BottomNavigationItem
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -23,6 +20,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var navController: NavHostController
     companion object{
+        const val minTimeForBeNew: Long = 1683996560
         val navList = listOf(
             BottomNavigationItem(
                 "Home",

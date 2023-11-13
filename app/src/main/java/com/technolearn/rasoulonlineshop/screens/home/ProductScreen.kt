@@ -22,19 +22,19 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import com.skydoves.landscapist.glide.GlideImage
 import com.technolearn.rasoulonlineshop.MainActivity
+import com.technolearn.rasoulonlineshop.MainActivity.Companion.minTimeForBeNew
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomButton
 import com.technolearn.rasoulonlineshop.helper.LoadingInColumn
@@ -49,6 +49,7 @@ import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.White
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
+import com.technolearn.rasoulonlineshop.util.Extensions.toHumanReadableDate
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
@@ -57,15 +58,17 @@ import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import com.technolearn.rasoulonlineshop.vo.res.SliderRes
 import timber.log.Timber
 
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
-    val sliderData by remember { viewModel.getAllSlider() }.observeAsState()
-//    val lifecycleOwner= LocalLifecycleOwner.current
-    val productRes by remember { viewModel.getAllProduct(0, 10) }.observeAsState()
+    val sliderData by remember { viewModel.allSlider }.observeAsState()
+    val productList by remember { viewModel.allProduct }.observeAsState()
 
-//    Timber.d("viewModelProducts:::${productList}")
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllSlider()
+        viewModel.fetchAllProduct(0, 10)
+    }
+    Timber.d("viewModelProducts:::${productList}")
     Scaffold(
         backgroundColor = Background,
         bottomBar = {
@@ -74,10 +77,7 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
                 navController = navController,
             )
         },
-        topBar = {
-
-        }
-
+        topBar = {}
     ) {
         Box(
             modifier = Modifier
@@ -108,17 +108,20 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
                                 rememberPagerState { sliderData?.data?.data?.size ?: 0 }
                             HorizontalPager(
                                 state = pagerState,
-                                key = { index: Int -> sliderData?.data?.data?.get(index)?.id.orDefault() },
+                                key = { index: Int ->
+                                    sliderData?.data?.data?.sortedBy { sliderRes -> sliderRes.id }
+                                        ?.get(index)?.id.orDefault()
+                                },
                             ) { index ->
                                 SliderItem(
-                                    sliderRes = sliderData?.data?.data?.get(index) ?: SliderRes(),
+                                    sliderRes = sliderData?.data?.data?.sortedBy { sliderRes -> sliderRes.id }
+                                        ?.get(index) ?: SliderRes(),
                                     navController
                                 )
                             }
                             Spacer(modifier = Modifier.height(18.dp))
                         }
                         Timber.d("Slider::SUCCESS${sliderData?.data}")
-
                     }
 
                     Status.ERROR -> {
@@ -127,7 +130,6 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
 
                     else -> {}
                 }
-
                 //SomeText New-You've never seen it before!-View all
                 item {
                     Row(
@@ -160,41 +162,42 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
                 //New Product Items
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
-
-                        when (productRes?.status) {
+                        when (productList?.status) {
                             Status.LOADING -> {
                                 item {
                                     LoadingInColumn(
                                         Modifier
                                             .fillMaxSize()
-                                            .height(536.dp)
+                                            .height(250.dp)
                                     )
                                     Spacer(modifier = Modifier.height(18.dp))
                                 }
-                                Timber.d("ProductNew::LOADING${productRes?.message}")
+                                Timber.d("ProductNew::LOADING${productList?.message}")
                             }
 
                             Status.SUCCESS -> {
-                                items(productRes?.data?.data?.filter { it.label == "NEW" }?.size.orDefault()) { index ->
+                                items(5) { index ->
                                     ProductItem(
-                                        productRes = productRes?.data?.data?.filter { it.label == "NEW" }
-                                            ?.get(index) ?: ProductRes(),
-                                        navController,
-                                        isLiked = {
-                                            viewModel.toggleAddToFavorites(
-                                                productRes?.data?.data?.get(
-                                                    index
-                                                )?.id.orDefault()
-                                            )
-                                        })
+                                        productRes =   productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }?.get(index) ?: ProductRes(),
+                                        navController = navController,
+                                        isNew =   productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }?.get(index)?.addDate.orDefault() > minTimeForBeNew,
+                                        viewModel=viewModel
+                                        )
+//                                    isLiked = {
+//                                        viewModel.toggleAddToFavorites(
+//                                            productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }?.get(index)?.id.orDefault()
+//                                        )
+//                                    }
                                 }
-                                Timber.d("ProductNew::SUCCESS${productRes?.data?.data?.filter { it.label == "NEW" }}")
-
+                                Timber.d("ProductNew::SUCCESS${productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }}")
+                                Timber.d("minTimeForBeNew${minTimeForBeNew.toHumanReadableDate()}")
                             }
 
-                            Status.ERROR -> TODO()
+                            Status.ERROR -> {
+                                Timber.d("ProductNew::ERROR${productList?.message}")
+                            }
 
-                            else->{}
+                            else -> {}
                         }
 
                     }
@@ -232,48 +235,42 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
                 //Popular Product Items
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        when (productRes?.status) {
+                        when (productList?.status) {
                             Status.LOADING -> {
                                 item {
                                     LoadingInColumn(
                                         Modifier
                                             .fillMaxSize()
-                                            .height(536.dp)
+                                            .height(250.dp)
                                     )
                                     Spacer(modifier = Modifier.height(18.dp))
                                 }
-                                Timber.d("ProductPopular::LOADING${productRes?.message}")
+                                Timber.d("ProductPopular::LOADING${productList?.message}")
                             }
 
                             Status.SUCCESS -> {
-                                items(
-                                    productRes?.data?.data?.filter { it.rate.orDefault() >= 3.5 }?.size
-                                        ?: 0
-                                ) { index ->
+                                items(5) { index ->
                                     ProductItem(
-                                        productRes = productRes?.data?.data?.filter { it.rate.orDefault() >= 3.5 }
-                                            ?.sortedByDescending { it.rate }?.get(index)
-                                            ?: ProductRes(),
+                                        productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.rate }?.get(index) ?: ProductRes(),
                                         navController = navController,
-                                    ) {
-                                        viewModel.toggleAddToFavorites(
-                                            productRes?.data?.data?.get(
-                                                index
-                                            )?.id.orDefault()
-                                        )
-                                    }
+                                        isNew = false,
+                                        viewModel=viewModel
+                                    )
+//                                    {
+//                                        viewModel.toggleAddToFavorites(
+//                                            productList?.data?.data?.sortedByDescending { productRes -> productRes.rate }?.get(index)?.id.orDefault()
+//                                        )
+//                                    }
                                 }
-                                Timber.d("ProductPopular::SUCCESS${productRes?.data}")
-
+                                Timber.d("ProductPopular::SUCCESS${productList?.data}")
                             }
 
                             Status.ERROR -> {
-                                Timber.d("ProductPopular::ERROR${productRes?.message}")
+                                Timber.d("ProductPopular::ERROR${productList?.message}")
                             }
 
                             else -> {}
                         }
-
                     }
                 }
             }

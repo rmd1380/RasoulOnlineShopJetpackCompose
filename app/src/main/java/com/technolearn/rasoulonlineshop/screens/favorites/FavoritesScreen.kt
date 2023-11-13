@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -32,15 +33,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.technolearn.rasoulonlineshop.MainActivity
 import com.technolearn.rasoulonlineshop.R
-import com.technolearn.rasoulonlineshop.helper.ProductFavoriteItem
+import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
+import com.technolearn.rasoulonlineshop.helper.ProductItem
+import com.technolearn.rasoulonlineshop.helper.ProductItemHorizontal
+import com.technolearn.rasoulonlineshop.mapper.toProductRes
 import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
+import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
@@ -48,6 +56,7 @@ import com.technolearn.rasoulonlineshop.ui.theme.FontRegular16
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
+import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,15 +65,19 @@ fun FavoritesScreen(navController: NavController, viewModel: ShopViewModel) {
     var isList by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     var showFilterOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
     val filterOptions = arrayListOf(
         stringResource(id = R.string.popular),
         stringResource(id = R.string.newest),
         stringResource(id = R.string.lowest_to_high),
         stringResource(id = R.string.highest_to_low),
     )
-    var selectedFilterText by rememberSaveable { mutableStateOf("Price: lowest to high") }
+    var selectedFilterText by rememberSaveable { mutableStateOf(context.getString(R.string.lowest_to_high)) }
     val productList by remember { viewModel.getAllFavorite() }.observeAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.getAllFavorite()
+    }
     Timber.d("productListFavoriteScreen:::$productList")
     Scaffold(
         backgroundColor = Background,
@@ -75,7 +88,25 @@ fun FavoritesScreen(navController: NavController, viewModel: ShopViewModel) {
             )
         },
         topBar = {
-
+            CustomTopAppBar(
+                title = context.getString(R.string.favorites),
+                style = FontSemiBold18(Black),
+                navigationIcon = ImageVector.vectorResource(R.drawable.ic_chevron_back),
+                actionIcons = listOf(
+                    CustomAction(
+                        "search",
+                        ImageVector.vectorResource(R.drawable.ic_search)
+                    )
+                ),
+                navigationOnClick = {
+                    navController.navigate(NavigationBarItemsGraph.Home.route) {
+                        popUpTo(NavigationBarItemsGraph.Home.route) {
+                            inclusive = true
+                        }
+                    }
+                },
+                actionOnclick = { /*TODO*/ }
+            )
         }
 
     ) {
@@ -84,64 +115,31 @@ fun FavoritesScreen(navController: NavController, viewModel: ShopViewModel) {
                 .fillMaxSize()
                 .padding(it)
         ) {
-
-            Box(
+            Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(it)
+                    .fillMaxWidth()
             ) {
-                Column(
+                //Filter
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(end = 16.dp, start = 16.dp, top = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    //Filter
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 16.dp, start = 16.dp, top = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        modifier = Modifier
+                            .clickable(
+                                interactionSource = MutableInteractionSource(),
+                                indication = null
+                            ) {
+                                showFilterOptionsBottomSheet = true
+                            }
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clickable(
-                                    interactionSource = MutableInteractionSource(),
-                                    indication = null
-                                ) {
-                                    showFilterOptionsBottomSheet = true
-                                }
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_swap_vert),
-                                contentDescription = "ic_swap_vert",
-                                tint = Black,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable(
-                                        interactionSource = MutableInteractionSource(),
-                                        indication = null
-                                    ) {
-                                        showFilterOptionsBottomSheet = true
-                                    }
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = selectedFilterText,
-                                style = FontRegular11(Black),
-                                modifier = Modifier
-                                    .clickable(
-                                        interactionSource = MutableInteractionSource(),
-                                        indication = null
-                                    ) {
-                                        showFilterOptionsBottomSheet = true
-                                    }
-                            )
-                        }
                         Icon(
-                            painter = if (isList) painterResource(id = R.drawable.ic_view_grid)
-                            else painterResource(id = R.drawable.ic_view_list),
-                            contentDescription = "ic_view_list",
+                            painter = painterResource(id = R.drawable.ic_swap_vert),
+                            contentDescription = "ic_swap_vert",
                             tint = Black,
                             modifier = Modifier
                                 .size(24.dp)
@@ -149,74 +147,199 @@ fun FavoritesScreen(navController: NavController, viewModel: ShopViewModel) {
                                     interactionSource = MutableInteractionSource(),
                                     indication = null
                                 ) {
-                                    isList = !isList
+                                    showFilterOptionsBottomSheet = true
+                                }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = selectedFilterText,
+                            style = FontRegular11(Black),
+                            modifier = Modifier
+                                .clickable(
+                                    interactionSource = MutableInteractionSource(),
+                                    indication = null
+                                ) {
+                                    showFilterOptionsBottomSheet = true
                                 }
                         )
                     }
-                    if (showFilterOptionsBottomSheet) {
-                        ModalBottomSheet(
-                            sheetState = sheetState,
-                            onDismissRequest = {
-                                showFilterOptionsBottomSheet = false
-                            }
-                        ) {
-                            Text(
-                                text = stringResource(R.string.sort_by),
-                                style = FontSemiBold18(Black),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Spacer(modifier = Modifier.height(32.dp))
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 32.dp, start = 16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                    Icon(
+                        painter = if (isList) painterResource(id = R.drawable.ic_view_grid)
+                        else painterResource(id = R.drawable.ic_view_list),
+                        contentDescription = "ic_view_list",
+                        tint = Black,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable(
+                                interactionSource = MutableInteractionSource(),
+                                indication = null
                             ) {
-                                items(filterOptions.size) { index ->
-                                    Text(
-                                        text = filterOptions[index],
-                                        style = FontRegular16(Black),
-                                        textAlign = TextAlign.Start,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                showFilterOptionsBottomSheet =
-                                                    !showFilterOptionsBottomSheet
-                                                selectedFilterText = filterOptions[index]
-                                            }
+                                isList = !isList
+                            }
+                    )
+                }
+                if (showFilterOptionsBottomSheet) {
+                    ModalBottomSheet(
+                        sheetState = sheetState,
+                        onDismissRequest = {
+                            showFilterOptionsBottomSheet = false
+                        }
+                    ) {
+                        Text(
+                            text = stringResource(R.string.sort_by),
+                            style = FontSemiBold18(Black),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(32.dp))
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 32.dp, start = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            items(filterOptions.size) { index ->
+                                Text(
+                                    text = filterOptions[index],
+                                    style = FontRegular16(Black),
+                                    textAlign = TextAlign.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            showFilterOptionsBottomSheet =
+                                                !showFilterOptionsBottomSheet
+                                            selectedFilterText = filterOptions[index]
+                                        }
+                                )
+                                Spacer(modifier = Modifier.height(32.dp))
+                            }
+                        }
+                    }
+                }
+
+                //ProductItems
+                if (isList) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        when (selectedFilterText) {
+                            context.getString(R.string.newest) -> {
+                                items(productList?.size.orDefault()) { index ->
+                                    ProductItemHorizontal(
+                                        productRes = productList?.sortedByDescending { productRes -> productRes.addDate }
+                                            ?.get(index)
+                                            ?.let { it1 -> toProductRes(it1) },
+                                        navController,
+                                        isNew = productList?.sortedByDescending { productRes -> productRes.addDate }
+                                            ?.get(index)?.addDate.orDefault() > MainActivity.minTimeForBeNew,
+                                        viewModel = viewModel
                                     )
-                                    Spacer(modifier = Modifier.height(32.dp))
+                                }
+                            }
+
+                            context.getString(R.string.popular) -> {
+                                items(productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
+                                    ProductItemHorizontal(
+                                        productRes = productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
+                                            ?.sortedByDescending { productRes -> productRes.rate }
+                                            ?.get(index)
+                                            ?.let { it1 -> toProductRes(it1) },
+                                        navController = navController,
+                                        isNew = false,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
+
+                            context.getString(R.string.highest_to_low) -> {
+                                items(productList?.size.orDefault()) { index ->
+                                    ProductItemHorizontal(
+                                        productRes = productList?.sortedByDescending { productRes -> productRes.price }
+                                            ?.get(index)
+                                            ?.let { it1 -> toProductRes(it1) },
+                                        navController = navController,
+                                        isNew = false,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
+
+                            context.getString(R.string.lowest_to_high) -> {
+                                items(productList?.size.orDefault()) { index ->
+                                    ProductItemHorizontal(
+                                        productRes = productList?.sortedBy { productRes -> productRes.price }
+                                            ?.get(index)
+                                            ?.let { it1 -> toProductRes(it1) },
+                                        navController = navController,
+                                        isNew = false,
+                                        viewModel = viewModel
+                                    )
                                 }
                             }
                         }
                     }
+                } else {
+                    LazyVerticalGrid(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        columns = GridCells.Fixed(2)
+                    ) {
+                        when (selectedFilterText) {
+                            context.getString(R.string.newest) -> {
+                                items(productList?.size.orDefault()) { index ->
+                                    ProductItem(
+                                        productRes = productList?.sortedByDescending { productRes -> productRes.addDate }
+                                            ?.get(index)
+                                            ?.let { it1 -> toProductRes(it1) },
+                                        navController = navController,
+                                        isNew = productList?.sortedByDescending { productRes -> productRes.addDate }
+                                            ?.get(index)?.addDate.orDefault() > MainActivity.minTimeForBeNew,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
 
-                    //ProductItems
-                    if (isList) {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            contentPadding = PaddingValues(bottom = 16.dp)
-                        ) {
-                        }
-                    } else {
-                        LazyVerticalGrid(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            columns = GridCells.Fixed(2)
-                        ) {
-                            items(productList?.size.orDefault()) { index ->
-                                ProductFavoriteItem(
-                                    productRes = productList?.get(index),
-                                    navController = navController,
-                                    isLiked = {
-                                        viewModel.toggleAddToFavorites(productList?.get(index)?.id.orDefault())
-                                    }
-                                )
+                            context.getString(R.string.popular) -> {
+                                items(productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
+                                    ProductItem(
+                                        productRes = productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
+                                            ?.sortedByDescending { productRes -> productRes.rate }
+                                            ?.get(index)
+                                            ?.let { it1 -> toProductRes(it1) },
+                                        navController = navController,
+                                        isNew = false,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
+
+                            context.getString(R.string.highest_to_low) -> {
+                                items(productList?.size.orDefault()) { index ->
+                                    ProductItem(
+                                        productRes = productList?.sortedByDescending { productRes -> productRes.price }
+                                            ?.get(index)?.let { it1 -> toProductRes(it1) },
+                                        navController = navController,
+                                        isNew = false,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
+
+                            context.getString(R.string.lowest_to_high) -> {
+                                items(productList?.size.orDefault()) { index ->
+                                    ProductItem(
+                                        productRes = productList?.sortedBy { productRes -> productRes.price }
+                                            ?.get(index)?.let { it1 -> toProductRes(it1) },
+                                        navController = navController,
+                                        isNew = false,
+                                        viewModel = viewModel
+                                    )
+                                }
                             }
                         }
                     }

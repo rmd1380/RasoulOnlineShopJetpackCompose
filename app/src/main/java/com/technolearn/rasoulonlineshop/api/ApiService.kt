@@ -4,6 +4,7 @@ import com.technolearn.rasoulonlineshop.vo.generics.ApiResponse
 import com.technolearn.rasoulonlineshop.vo.req.LoginReq
 import com.technolearn.rasoulonlineshop.vo.req.SignUpReq
 import com.technolearn.rasoulonlineshop.vo.res.CategoryRes
+import com.technolearn.rasoulonlineshop.vo.res.ColorRes
 import com.technolearn.rasoulonlineshop.vo.res.LoginRes
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import com.technolearn.rasoulonlineshop.vo.res.SignUpRes
@@ -63,5 +64,16 @@ interface ApiService {
 
     //endregion
 
+    //region Color
+    @GET("api/color")
+    suspend fun getAllColor(
+    ): Response<ApiResponse<List<ColorRes>>>
+
+    @GET("api/color/{id}")
+    suspend fun getColorById(
+        @Path("id") id: Long
+    ): Response<ApiResponse<ColorRes>>
+
+    //endregion
 
 }

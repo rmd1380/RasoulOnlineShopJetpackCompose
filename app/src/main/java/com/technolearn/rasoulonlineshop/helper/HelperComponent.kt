@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -31,16 +30,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -49,8 +41,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
@@ -61,14 +51,10 @@ import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.White
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
-import com.technolearn.rasoulonlineshop.util.Extensions.orFalse
-import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
-import kotlin.math.ceil
-import kotlin.math.floor
 
 @Composable
 fun CustomRatingBar(
@@ -124,6 +110,7 @@ fun AddToFavorite(
     modifier: Modifier,
     productRes: ProductRes?,
     onToggleFavorite: (Int) -> Unit,
+    isProductLikedState: Boolean
 ) {
     Card(
         modifier = modifier,
@@ -138,9 +125,9 @@ fun AddToFavorite(
             }
         ) {
             Icon(
-                painter = painterResource(id = if (productRes?.isAddToFavorites.orFalse()) R.drawable.ic_heart_filled else R.drawable.ic_heart_not_filled),
-                contentDescription = if (productRes?.isAddToFavorites.orFalse()) "Liked" else "Not Liked",
-                tint = if (productRes?.isAddToFavorites.orFalse()) Primary else Gray
+                painter = painterResource(id = if (isProductLikedState) R.drawable.ic_heart_filled else R.drawable.ic_heart_not_filled),
+                contentDescription = if (isProductLikedState) "Liked" else "Not Liked",
+                tint = if (isProductLikedState) Primary else Gray
             )
         }
     }
@@ -224,31 +211,7 @@ fun Tag(
             .clickable {
                 onClick.invoke()
             },
-        backgroundColor = when (tagColor) {
-            "Black" -> {
-                Black
-            }
-
-            "Yellow" -> {
-                Color.Yellow
-            }
-
-            "Red" -> {
-                Color.Red
-            }
-
-            "Blue" -> {
-                Color.Blue
-            }
-
-            "Green" -> {
-                Color.Green
-            }
-
-            else -> {
-                White
-            }
-        },
+        backgroundColor = White,
         border = BorderStroke(
             1.dp, when (tagColor) {
                 "Black" -> {
@@ -281,33 +244,7 @@ fun Tag(
     ) {
         Text(
             text = defaultValue,
-            style = FontMedium14(
-                when (tagColor) {
-                    "Black" -> {
-                        White
-                    }
-
-                    "Yellow" -> {
-                        White
-                    }
-
-                    "Red" -> {
-                        White
-                    }
-
-                    "Blue" -> {
-                        White
-                    }
-
-                    "Green" -> {
-                        White
-                    }
-
-                    else -> {
-                        Black
-                    }
-                }
-            ),
+            style = FontMedium14(Black),
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .padding(horizontal = 20.dp, vertical = 10.dp)
@@ -529,7 +466,13 @@ fun LoadingInColumn(modifier: Modifier, count: Int = 1) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator()
+        CircularProgressIndicator(
+            modifier = Modifier
+                .progressSemantics()
+                .size(24.dp),
+            color = Black,
+            strokeWidth = 2.dp
+        )
     }
 }
 

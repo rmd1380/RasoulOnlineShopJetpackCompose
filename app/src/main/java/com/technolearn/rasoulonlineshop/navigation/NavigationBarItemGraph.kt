@@ -9,35 +9,35 @@ sealed class NavigationBarItemsGraph(
     @DrawableRes val selectedIcon: Int,
     @DrawableRes val unSelectedIcon: Int,
 ) {
-    object Home : NavigationBarItemsGraph(
+    data object Home : NavigationBarItemsGraph(
         "home",
         "Home",
         R.drawable.ic_home_activated,
         R.drawable.ic_home_inactive
     )
 
-    object Shop : NavigationBarItemsGraph(
+    data object Shop : NavigationBarItemsGraph(
         "shop",
         "Shop",
         R.drawable.ic_shop_activated,
         R.drawable.ic_shop_inactive
     )
 
-    object Bag : NavigationBarItemsGraph(
+    data object Bag : NavigationBarItemsGraph(
         "bag",
         "Bag",
         R.drawable.ic_shop_bag_activated,
         R.drawable.ic_shop_bag_inactive
     )
 
-    object Favorites : NavigationBarItemsGraph(
+    data object Favorites : NavigationBarItemsGraph(
         "favorites",
         "Favorites",
         R.drawable.ic_heart_activated,
         R.drawable.ic_heart_inactive
     )
 
-    object Profile : NavigationBarItemsGraph(
+    data object Profile : NavigationBarItemsGraph(
         "profile",
         "Profile",
         R.drawable.ic_profile_activated,

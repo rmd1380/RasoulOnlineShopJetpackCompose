@@ -1,8 +1,6 @@
 package com.technolearn.rasoulonlineshop.screens.home
 
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.progressSemantics
@@ -34,7 +31,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -47,7 +44,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
@@ -80,16 +76,19 @@ import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.enums.Status
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
-import kotlinx.coroutines.flow.observeOn
 import timber.log.Timber
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel: ShopViewModel) {
 
-    val productRes by remember { viewModel.getProductById(productId.orDefault())}.observeAsState()
-    val productList by remember { viewModel.getAllProduct(0,10)}.observeAsState()
+    val productList by remember { viewModel.allProduct }.observeAsState()
+    val productRes by remember { viewModel.productById }.observeAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllProduct(0, 10)
+        viewModel.fetchProductById(productId.orDefault())
+    }
     Scaffold(
         backgroundColor = Background,
         bottomBar = {
@@ -132,22 +131,19 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                 }
             )
         }
-
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(it)
         ) {
-
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth(),
                 contentPadding = PaddingValues(bottom = 32.dp)
             ) {
-//                SliderItem(sliderRes = productRes[index].image[0])
                 //Slider
-                when(productRes?.status){
+                when (productRes?.status) {
                     Status.LOADING -> {
                         item {
                             LoadingInColumn(
@@ -159,6 +155,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                         }
                         Timber.d("productResDetail::LOADING${productRes}")
                     }
+
                     Status.SUCCESS -> {
                         item {
                             val pagerState = rememberPagerState(pageCount = {
@@ -166,32 +163,35 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                             })
                             HorizontalPager(
                                 state = pagerState,
-                                key = { index: Int -> productRes?.data?.data?.image?.get(index).orDefault() }
+                                key = { index: Int ->
+                                    productRes?.data?.data?.image?.get(index).orDefault()
+                                }
                             ) { page ->
-                                SliderItem(sliderRes =productRes?.data?.data?.image?.get(page).orDefault())
+                                SliderItem(
+                                    sliderRes = productRes?.data?.data?.image?.get(page).orDefault()
+                                )
                             }
-
                             Spacer(modifier = Modifier.height(12.dp))
                         }
                         Timber.d("productResDetail::SUCCESS${productRes?.data}")
                     }
+
                     Status.ERROR -> {
                         Timber.d("productResDetail::ERROR${productRes?.message}")
                     }
-                    else -> {
 
-                    }
+                    else -> {}
                 }
 
                 //DropDowns::Size,Color
                 item {
-                    DropdownsWithAddFavorite(productRes?.data?.data?: ProductRes(), viewModel)
+                    DropdownsWithAddFavorite(productRes?.data?.data ?: ProductRes(), viewModel)
                     Spacer(modifier = Modifier.height(20.dp))
                 }
                 //Brand-Rate-Price-Desc
                 item {
                     BrandRatePriceDesc(
-                        productRes?.data?.data?:ProductRes()
+                        productRes?.data?.data ?: ProductRes()
                     )
                     Divider(
                         modifier = Modifier
@@ -263,12 +263,10 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-
                         Text(
                             text = stringResource(R.string.you_can_also_like_this),
                             style = FontSemiBold18(Black),
                         )
-
                         Text(
                             text = "${productList?.data?.data?.size} items",
                             style = FontRegular11(Gray),
@@ -281,19 +279,36 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                 //Product
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        items(productList?.data?.data?.size.orDefault()) { productRes ->
-                            ProductItem(
-                                productRes = productList?.data?.data?.get(productRes)
-                                    ?: ProductRes(),
-                                navController = navController,
-                                isLiked = {
-                                    viewModel.toggleAddToFavorites(
-                                        productList?.data?.data?.get(
-                                            productRes
-                                        )?.id.orDefault()
+                        when (productList?.status) {
+                            Status.LOADING -> {
+                                item {
+                                    LoadingInColumn(
+                                        Modifier
+                                            .fillMaxSize()
+                                            .height(536.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(18.dp))
+                                }
+                                Timber.d("ProductOnDetail::LOADING${productList?.message}")
+                            }
+
+                            Status.SUCCESS -> {
+                                items(productList?.data?.data?.size.orDefault()) { productRes ->
+                                    ProductItem(
+                                        productRes = productList?.data?.data?.get(productRes)
+                                            ?: ProductRes(),
+                                        navController = navController,
+                                        viewModel =viewModel,
                                     )
                                 }
-                            )
+                                Timber.d("ProductOnDetail::SUCCESS${productList?.data}")
+                            }
+
+                            Status.ERROR -> {
+                                Timber.d("ProductOnDetail::ERROR${productList?.message}")
+                            }
+
+                            else -> {}
                         }
                     }
                 }
@@ -313,7 +328,7 @@ fun SliderItem(sliderRes: String) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(536.dp),
-            contentScale = ContentScale.Crop,
+            contentScale = ContentScale.Fit,
             loading = {
                 Column(
                     modifier = Modifier
@@ -331,7 +346,6 @@ fun SliderItem(sliderRes: String) {
                     )
                 }
             },
-            // shows an error text message when request failed.
             failure = {
                 Text(text = "image request failed.")
             })
@@ -341,6 +355,8 @@ fun SliderItem(sliderRes: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownsWithAddFavorite(productRes: ProductRes, viewModel: ShopViewModel) {
+    val isProductLiked by remember { viewModel.getAllFavorite() }.observeAsState(emptyList())
+
     val sheetState = rememberModalBottomSheetState()
 
     var showSizeBottomSheet by rememberSaveable { mutableStateOf(false) }
@@ -349,13 +365,15 @@ fun DropdownsWithAddFavorite(productRes: ProductRes, viewModel: ShopViewModel) {
     var isDropDownSizeFocused by rememberSaveable { mutableStateOf(false) }
     var isDropDownColorFocused by rememberSaveable { mutableStateOf(false) }
 
-    val buttonColorLabels = listOf("Black", "Yellow", "Red", "Blue", "Green")
-    var selectedColorText by rememberSaveable { mutableStateOf("Black") }
+    val colorList by remember { viewModel.allColor }.observeAsState()
+    val product by remember { viewModel.productById }.observeAsState()
 
-    val buttonSizeLabels = listOf("XL", "L", "M", "S", "XS")
+    var selectedColorText by rememberSaveable { mutableStateOf("Color") }
     var selectedSizeText by rememberSaveable { mutableStateOf("Size") }
 
-
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllColor()
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -367,7 +385,7 @@ fun DropdownsWithAddFavorite(productRes: ProductRes, viewModel: ShopViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             DropDown(
-                value = selectedSizeText,
+                value = selectedSizeText.orDefault(),
                 modifier = Modifier.weight(1f),
                 isFocused = isDropDownSizeFocused
             ) {
@@ -377,7 +395,7 @@ fun DropdownsWithAddFavorite(productRes: ProductRes, viewModel: ShopViewModel) {
             }
             Spacer(modifier = Modifier.width(12.dp))
             DropDown(
-                value = selectedColorText,
+                value = selectedColorText.orDefault(),
                 modifier = Modifier.weight(1f),
                 isFocused = isDropDownColorFocused
             ) {
@@ -386,20 +404,16 @@ fun DropdownsWithAddFavorite(productRes: ProductRes, viewModel: ShopViewModel) {
                 showColorBottomSheet = true
             }
             Spacer(modifier = Modifier.width(20.dp))
-//            AddToFavorite(
-//                modifier = Modifier
-//                    .size(36.dp)
-//                    .weight(0.25f),
-////                isAddToFavorite = isAddToFavorite
-//            )
             AddToFavorite(
                 modifier = Modifier
                     .size(36.dp)
                     .weight(0.25f),
                 productRes = productRes,
-            ) { productId ->
-                viewModel.toggleAddToFavorites(productId)
-            }
+                onToggleFavorite = {
+                    viewModel.toggleAddToFavorites(it)
+                },
+                isProductLikedState = isProductLiked.any { it.id == productRes.id }
+            )
         }
         if (showSizeBottomSheet) {
             ModalBottomSheet(
@@ -425,14 +439,29 @@ fun DropdownsWithAddFavorite(productRes: ProductRes, viewModel: ShopViewModel) {
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(3),
                     ) {
-                        items(buttonSizeLabels.size) { index ->
-                            Tag(
-                                defaultValue = buttonSizeLabels[index],
-                                roundCorner = 8.dp,
-                            ) {
-                                showSizeBottomSheet = !showSizeBottomSheet
-                                selectedSizeText = buttonSizeLabels[index]
+                        when (product?.status) {
+                            Status.LOADING -> {
+                                Timber.d("productSize::LOADING")
                             }
+
+                            Status.SUCCESS -> {
+                                items(product?.data?.data?.sizes?.size.orDefault()) { index ->
+                                    Tag(
+                                        defaultValue = product?.data?.data?.sizes?.get(index)?.title.orDefault(),
+                                        roundCorner = 8.dp,
+                                    ) {
+                                        showSizeBottomSheet = !showSizeBottomSheet
+                                        selectedSizeText = product?.data?.data?.sizes?.get(index)?.title.orDefault()
+                                    }
+                                }
+                                Timber.d("productSize::SUCCESS::${product?.data?.data?.sizes}")
+                            }
+
+                            Status.ERROR -> {
+                                Timber.d("productSize::ERROR::${product?.message}")
+                            }
+
+                            else -> {}
                         }
                     }
                 }
@@ -459,15 +488,31 @@ fun DropdownsWithAddFavorite(productRes: ProductRes, viewModel: ShopViewModel) {
                         textAlign = TextAlign.Center
                     )
                     LazyVerticalGrid(columns = GridCells.Fixed(3)) {
-                        items(buttonColorLabels.size) { index ->
-                            Tag(
-                                defaultValue = buttonColorLabels[index],
-                                roundCorner = 8.dp,
-                                tagColor = buttonColorLabels[index]
-                            ) {
-                                showColorBottomSheet = !showColorBottomSheet
-                                selectedColorText = buttonColorLabels[index]
+                        when (colorList?.status) {
+                            Status.LOADING -> {
+                                Timber.d("colorList::LOADING")
                             }
+
+                            Status.SUCCESS -> {
+                                items(colorList?.data?.data?.size.orDefault()) { index ->
+                                    Tag(
+                                        defaultValue = colorList?.data?.data?.get(index)?.title.orDefault(),
+                                        roundCorner = 8.dp,
+                                        tagColor = colorList?.data?.data?.get(index)?.title.orDefault()
+                                    ) {
+                                        showColorBottomSheet = !showColorBottomSheet
+                                        selectedColorText = colorList?.data?.data?.get(index)?.title.orDefault()
+                                    }
+                                }
+                                Timber.d("colorList::SUCCESS::${colorList?.data}")
+                                Timber.d("colorList000::SUCCESS::${colorList?.data?.data?.get(0)?.title}")
+                            }
+
+                            Status.ERROR -> {
+                                Timber.d("colorList::ERROR::${colorList?.message}")
+                            }
+
+                            else -> {}
                         }
                     }
                 }
@@ -528,7 +573,6 @@ fun BrandRatePriceDesc(
                     textDecoration = if (productRes.hasDiscount.orDefault() > 0f) TextDecoration.LineThrough else TextDecoration.None,
                     textAlign = TextAlign.End
                 )
-
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -538,5 +582,4 @@ fun BrandRatePriceDesc(
             textAlign = TextAlign.Justify
         )
     }
-
 }

@@ -7,12 +7,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.technolearn.rasoulonlineshop.api.ApiService
 import com.technolearn.rasoulonlineshop.db.dao.FavoritesDao
+import com.technolearn.rasoulonlineshop.mapper.toFavoriteEntity
+import com.technolearn.rasoulonlineshop.util.Extensions.orFalse
 import com.technolearn.rasoulonlineshop.util.safeApiCall
+import com.technolearn.rasoulonlineshop.vo.entity.FavoriteEntity
 import com.technolearn.rasoulonlineshop.vo.generics.ApiResponse
 import com.technolearn.rasoulonlineshop.vo.generics.Resource
 import com.technolearn.rasoulonlineshop.vo.req.LoginReq
 import com.technolearn.rasoulonlineshop.vo.req.SignUpReq
 import com.technolearn.rasoulonlineshop.vo.res.CategoryRes
+import com.technolearn.rasoulonlineshop.vo.res.ColorRes
 import com.technolearn.rasoulonlineshop.vo.res.LoginRes
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import com.technolearn.rasoulonlineshop.vo.res.SignUpRes
@@ -30,27 +34,34 @@ class ShopViewModel @Inject constructor(
     private val favoritesDao: FavoritesDao
 ) : ViewModel() {
 
-    //    private var register: MutableLiveData<Resource<ApiResponse<SignUpRes>>> =
-//        MutableLiveData()
+
     private val _registerStatus = MutableLiveData<Resource<ApiResponse<SignUpRes>>>()
     val registerStatus: LiveData<Resource<ApiResponse<SignUpRes>>> = _registerStatus
     private val _loginStatus = MutableLiveData<Resource<ApiResponse<LoginRes>>>()
     val loginStatus: LiveData<Resource<ApiResponse<LoginRes>>> = _loginStatus
-    private var allSlider: MutableLiveData<Resource<ApiResponse<List<SliderRes>>>> =
-        MutableLiveData()
-    private var sliderById: MutableLiveData<Resource<ApiResponse<SliderRes>>> =
-        MutableLiveData()
-    private var allProduct: MutableLiveData<Resource<ApiResponse<List<ProductRes>>>> =
-        MutableLiveData()
-    private var productById: MutableLiveData<Resource<ApiResponse<ProductRes>>> =
-        MutableLiveData()
-    private var allCategory: MutableLiveData<Resource<ApiResponse<List<CategoryRes>>>> =
-        MutableLiveData()
 
+    private val _allSlider = MutableLiveData<Resource<ApiResponse<List<SliderRes>>>>()
+    val allSlider: LiveData<Resource<ApiResponse<List<SliderRes>>>> = _allSlider
+    private val _sliderById = MutableLiveData<Resource<ApiResponse<SliderRes>>>()
+    val sliderById: LiveData<Resource<ApiResponse<SliderRes>>> = _sliderById
+
+    private val _allProduct = MutableLiveData<Resource<ApiResponse<List<ProductRes>>>>()
+    val allProduct: LiveData<Resource<ApiResponse<List<ProductRes>>>> = _allProduct
+    private val _productById = MutableLiveData<Resource<ApiResponse<ProductRes>>>()
+    val productById: LiveData<Resource<ApiResponse<ProductRes>>> = _productById
+
+
+    private val _allCategory = MutableLiveData<Resource<ApiResponse<List<CategoryRes>>>>()
+    val allCategory: LiveData<Resource<ApiResponse<List<CategoryRes>>>> = _allCategory
+
+    private val _allColor = MutableLiveData<Resource<ApiResponse<List<ColorRes>>>>()
+    val allColor: LiveData<Resource<ApiResponse<List<ColorRes>>>> = _allColor
+    private val _colorById = MutableLiveData<Resource<ApiResponse<ColorRes>>>()
+    val colorById: LiveData<Resource<ApiResponse<ColorRes>>> = _colorById
 
     private val allFavoriteProducts = favoritesDao.getAllFavoriteProducts()
 
-    fun getAllFavorite(): LiveData<List<ProductRes>> {
+    fun getAllFavorite(): LiveData<List<FavoriteEntity>> {
         return allFavoriteProducts
     }
 
@@ -70,6 +81,7 @@ class ShopViewModel @Inject constructor(
             }
         }
     }
+
     fun login(loginReq: LoginReq) {
         viewModelScope.launch {
             _loginStatus.value = Resource.loading(null)
@@ -85,147 +97,155 @@ class ShopViewModel @Inject constructor(
             }
         }
     }
-//    fun register(signUpReq: SignUpReq): MutableLiveData<Resource<ApiResponse<SignUpRes>>> {
-//        viewModelScope.launch {
-//            register = safeApiCall(Dispatchers.IO) {
-//                apiService.register(signUpReq)
-//            } as MutableLiveData<Resource<ApiResponse<SignUpRes>>>
-//        }
-//        return register
-//    }
-
     //endregion
 
     //region Slider
-    fun getAllSlider(): MutableLiveData<Resource<ApiResponse<List<SliderRes>>>> {
+    fun fetchAllSlider() {
         viewModelScope.launch {
-            allSlider = safeApiCall(Dispatchers.IO) {
-                apiService.getAllSlider()
-            } as MutableLiveData<Resource<ApiResponse<List<SliderRes>>>>
+            _allSlider.value = Resource.loading(null)
+            try {
+                val result = safeApiCall(Dispatchers.IO) {
+                    apiService.getAllSlider()
+                }
+                result.observeForever { resource ->
+                    _allSlider.value = resource
+                }
+            } catch (e: Exception) {
+                _allSlider.value = Resource.error(null, e.message, null, null, null)
+            }
         }
-        return allSlider
     }
 
-    fun getSliderById(id: Long): MutableLiveData<Resource<ApiResponse<SliderRes>>> {
+    fun fetchSliderById(id: Long) {
         viewModelScope.launch {
-            sliderById = safeApiCall(Dispatchers.IO) {
-                apiService.getSliderById(id)
-            } as MutableLiveData<Resource<ApiResponse<SliderRes>>>
+            _sliderById.value = Resource.loading(null)
+            try {
+                val result = safeApiCall(Dispatchers.IO) {
+                    apiService.getSliderById(id)
+                }
+                result.observeForever { resource ->
+                    _sliderById.value = resource
+                }
+            } catch (e: Exception) {
+                _sliderById.value = Resource.error(null, e.message, null, null, null)
+            }
         }
-        return sliderById
     }
     //endregion
 
     //region Product
-    fun getAllProduct(
+    fun fetchAllProduct(
         pageIndex: Int,
         pageSize: Int
-    ): MutableLiveData<Resource<ApiResponse<List<ProductRes>>>> {
+    ) {
         viewModelScope.launch {
-            allProduct = safeApiCall(Dispatchers.IO) {
-                apiService.getAllProduct(pageIndex = pageIndex, pageSize = pageSize)
-            } as MutableLiveData<Resource<ApiResponse<List<ProductRes>>>>
+            _allProduct.value = Resource.loading(null)
+            try {
+                val result = safeApiCall(Dispatchers.IO) {
+                    apiService.getAllProduct(pageIndex = pageIndex, pageSize = pageSize)
+                }
+                result.observeForever { resource ->
+                    _allProduct.value = resource
+                    updateIsAddToFavorites(_allProduct.value?.data?.data)
+                }
+            } catch (e: Exception) {
+                _allProduct.value = Resource.error(null, e.message, null, null, null)
+            }
         }
-        return allProduct
     }
 
-    fun getProductById(id: Int): MutableLiveData<Resource<ApiResponse<ProductRes>>> {
+    fun fetchProductById(id: Int) {
         viewModelScope.launch {
-            productById = safeApiCall(Dispatchers.IO) {
-                apiService.getProductById(id)
-            } as MutableLiveData<Resource<ApiResponse<ProductRes>>>
+            _productById.value = Resource.loading(null)
+            try {
+                val result = safeApiCall(Dispatchers.IO) {
+                    apiService.getProductById(id)
+                }
+                result.observeForever { resource ->
+                    _productById.value = resource
+                }
+            } catch (e: Exception) {
+                _productById.value = Resource.error(null, e.message, null, null, null)
+            }
         }
-        return productById
     }
     //endregion
 
     //region Category
-
-    fun getAllCategory(): MutableLiveData<Resource<ApiResponse<List<CategoryRes>>>> {
+    fun fetchAllCategory(
+    ) {
         viewModelScope.launch {
-            allCategory = safeApiCall(Dispatchers.IO) {
-                apiService.getAllCategory()
-            } as MutableLiveData<Resource<ApiResponse<List<CategoryRes>>>>
+            _allCategory.value = Resource.loading(null)
+            try {
+                val result = safeApiCall(Dispatchers.IO) {
+                    apiService.getAllCategory()
+                }
+                result.observeForever { resource ->
+                    _allCategory.value = resource
+                }
+            } catch (e: Exception) {
+                _allCategory.value = Resource.error(null, e.message, null, null, null)
+            }
         }
-        return allCategory
     }
 
+    //endregion
+
+    //region Color
+
+    fun fetchAllColor() {
+        viewModelScope.launch {
+            _allColor.value = Resource.loading(null)
+            try {
+                val result = safeApiCall(Dispatchers.IO) {
+                    apiService.getAllColor()
+                }
+                result.observeForever { resource ->
+                    _allColor.value = resource
+                }
+            } catch (e: Exception) {
+                _allColor.value = Resource.error(null, e.message, null, null, null)
+            }
+        }
+    }
+
+    fun fetchColorById(id: Long) {
+        viewModelScope.launch {
+            _colorById.value = Resource.loading(null)
+            try {
+                val result = safeApiCall(Dispatchers.IO) {
+                    apiService.getColorById(id)
+                }
+                result.observeForever { resource ->
+                    _colorById.value = resource
+                }
+            } catch (e: Exception) {
+                _colorById.value = Resource.error(null, e.message, null, null, null)
+            }
+        }
+    }
 
     //endregion
     fun toggleAddToFavorites(productId: Int) {
-        Timber.d("toggleAddToFavorites called for productId: $productId")
+        val product = _allProduct.value?.data?.data?.find { it.id == productId }
         viewModelScope.launch {
-            allProduct.value?.data?.data?.map { product ->
-                if (product.id == productId) {
-                    allProduct.value?.data?.data?.map {
-                        it.isAddToFavorites = !product.isAddToFavorites
-                        allProduct.postValue(allProduct.value)
-                    }
-                    Timber.d("toggleAddToFavorites called for productId::::updatedProduct ${product.isAddToFavorites}")
-                }
+            if (product?.isAddToFavorites.orFalse()) {
+                Timber.d("deleteFromFavorite:$product")
+                favoritesDao.deleteFromFavorite(toFavoriteEntity(product ?: ProductRes()))
+            } else {
+                Timber.d("insertToFavorite:$product")
+                favoritesDao.insertToFavorite(toFavoriteEntity(product ?: ProductRes()))
             }
-            val product = allProduct.value?.data?.data?.find { it.id == productId }
-            product?.let {
-                if (product.isAddToFavorites) {
-                    Timber.d("insertToFavorite:$product")
-                    favoritesDao.insertToFavorite(product)
-                } else {
-                    Timber.d("deleteFromFavorite:$product")
-                    favoritesDao.deleteFromFavorite(product)
+        }
+    }
+    private fun updateIsAddToFavorites(productList: List<ProductRes>?) {
+        allFavoriteProducts.observeForever { favoriteProducts ->
+            productList?.let {
+                for (product in it) {
+                    product.isAddToFavorites =
+                        favoriteProducts.any { favoriteProduct -> favoriteProduct.id == product.id }
                 }
             }
         }
-
-//    val products: MutableStateFlow<List<ProductRes>> = MutableStateFlow(emptyList())
-//    val allFavoriteProducts = favoritesDao.getAllFavoriteProducts()
-//
-//    init {
-//        products.value = testList
-//        viewModelScope.launch {
-//            allFavoriteProducts.collect {pro->
-//                pro.forEach {pro1->
-//                    products.value.forEach{pro2->
-//                        if(pro1.id==pro2.id){
-//                            pro2.isAddToFavorites=true
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    fun toggleAddToFavorites(productId: Int) {
-//        Timber.d("toggleAddToFavorites called for productId: $productId")
-//        viewModelScope.launch {
-//            val updatedList = products.value.map { product ->
-//                if (product.id == productId) {
-//                    val updatedProduct = product.copy(isAddToFavorites = !product.isAddToFavorites)
-//                    Timber.d("toggleAddToFavorites called for productId::::updatedProduct $updatedProduct")
-//                    updatedProduct
-//                } else {
-//                    product
-//                }
-//            }
-//
-//            updatedList.let { products.value = it }
-//
-//            val product = products.value.find { it.id == productId }
-//
-//            product?.let {
-//                if (product.isAddToFavorites) {
-//                    Timber.d("deleteFromFavorite:$product")
-//                    favoritesDao.insertToFavorite(product)
-//                } else {
-//                    Timber.d("insertToFavorite:$product")
-//                    favoritesDao.deleteFromFavorite(product)
-//
-//                }
-//            }
-//
-//
-//        }
-//    }
     }
-
-
 }

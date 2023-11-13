@@ -7,22 +7,16 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.technolearn.rasoulonlineshop.vo.res.ProductRes
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
+import com.technolearn.rasoulonlineshop.vo.entity.FavoriteEntity
 
 @Dao
 interface FavoritesDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertToFavorite(favoritesEntity: ProductRes)
+    suspend fun insertToFavorite(favoritesEntity: FavoriteEntity)
     @Update
-    suspend fun updateFavorite(favoritesEntity: ProductRes)
+    suspend fun updateFavorite(favoritesEntity: FavoriteEntity)
     @Delete
-    suspend fun deleteFromFavorite(favoritesEntity: ProductRes)
+    suspend fun deleteFromFavorite(favoritesEntity: FavoriteEntity)
     @Query("SELECT * FROM favorites")
-    fun getAllProducts(): Flow<List<ProductRes>>
-
-    @Query("SELECT * FROM favorites WHERE isAddToFavorites = 1 ")
-    fun getAllFavoriteProducts(): LiveData<List<ProductRes>>
-
+    fun getAllFavoriteProducts(): LiveData<List<FavoriteEntity>>
 }

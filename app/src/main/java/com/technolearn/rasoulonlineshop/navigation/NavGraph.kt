@@ -14,7 +14,6 @@ import com.technolearn.rasoulonlineshop.screens.favorites.FavoritesScreen
 import com.technolearn.rasoulonlineshop.screens.home.MoreProductScreen
 import com.technolearn.rasoulonlineshop.screens.home.ProductDetailScreen
 import com.technolearn.rasoulonlineshop.screens.home.ProductScreen
-import com.technolearn.rasoulonlineshop.screens.profile.ProfileScreen
 import com.technolearn.rasoulonlineshop.screens.shop.ShopScreen
 import com.technolearn.rasoulonlineshop.util.Constants
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
