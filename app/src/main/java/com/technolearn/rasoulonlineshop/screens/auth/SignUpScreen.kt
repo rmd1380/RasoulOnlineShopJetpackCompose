@@ -21,6 +21,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +63,11 @@ import timber.log.Timber
 fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
 //    val sliderData by remember { viewModel.register(createRequest()) }.observeAsState()
     val registerStatus by remember {viewModel.registerStatus}.observeAsState()
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.resetRegisterStatus() // Add a function to reset the status in your ViewModel
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -284,6 +290,10 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                             passwordHasError = true
                             passwordLabel = "Password Can Not Be Empty"
                         }
+                        password.length<8 -> {
+                            passwordHasError = true
+                            passwordLabel = "Password Is Weak AtLeast Contain 8 Character"
+                        }
 
                         !nameHasError && !emailHasError && !passwordHasError -> {
                             viewModel.register(
@@ -309,7 +319,8 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                     Timber.d("Register:::LOADING:::")
                 }
                 Status.SUCCESS -> {
-                    Timber.d("Register:::SUCCESS:::${registerStatus?.data}")
+                    Timber.d("Register:::SUCCESS:::${registerStatus?.data?.status}")
+
                     navController.navigate(Screen.LoginScreen.route)
                 }
                 Status.ERROR -> {
@@ -321,12 +332,12 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                 }
             }
             Spacer(modifier = Modifier.height(125.dp))
-            Text(
-                text = "Or sign up with social account",
-                style = FontMedium14(Black),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+//            Text(
+//                text = "Or sign up with social account",
+//                style = FontMedium14(Black),
+//                textAlign = TextAlign.Center,
+//                modifier = Modifier.fillMaxWidth()
+//            )
         }
     }
 }

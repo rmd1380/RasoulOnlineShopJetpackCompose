@@ -1,6 +1,7 @@
 package com.technolearn.rasoulonlineshop.screens.auth
 
 import android.util.Patterns
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomButton
+import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
 import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
@@ -61,8 +63,8 @@ fun LoginScreen(navController: NavController) {
                 },
                 navigationIcon = {
                     IconButton(onClick = {
-                        navController.navigate(Screen.SignUpScreen.route) {
-                            popUpTo(Screen.SignUpScreen.route) {
+                        navController.navigate(NavigationBarItemsGraph.Profile.route) {
+                            popUpTo(NavigationBarItemsGraph.Profile.route) {
                                 inclusive = true
                             }
                         }
@@ -232,6 +234,13 @@ fun LoginScreen(navController: NavController) {
                     size = ButtonSize.BIG,
                     roundCorner = 25.dp,
                 )
+            }
+        }
+    }
+    BackHandler {
+        navController.navigate(NavigationBarItemsGraph.Profile.route) {
+            popUpTo(NavigationBarItemsGraph.Profile.route) {
+                inclusive = true
             }
         }
     }

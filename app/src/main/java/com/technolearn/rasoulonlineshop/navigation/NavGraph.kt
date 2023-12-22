@@ -12,10 +12,13 @@ import com.technolearn.rasoulonlineshop.screens.auth.SignUpScreen
 import com.technolearn.rasoulonlineshop.screens.bag.BagScreen
 import com.technolearn.rasoulonlineshop.screens.favorites.FavoritesScreen
 import com.technolearn.rasoulonlineshop.screens.home.MoreProductScreen
+import com.technolearn.rasoulonlineshop.screens.home.ProductARScreen
 import com.technolearn.rasoulonlineshop.screens.home.ProductDetailScreen
 import com.technolearn.rasoulonlineshop.screens.home.ProductScreen
+import com.technolearn.rasoulonlineshop.screens.shop.ProductByCategoryScreen
 import com.technolearn.rasoulonlineshop.screens.shop.ShopScreen
 import com.technolearn.rasoulonlineshop.util.Constants
+import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 
 @Composable
@@ -28,7 +31,7 @@ fun SetupNavGraph(
         startDestination = NavigationBarItemsGraph.Home.route
     ) {
         composable(route = Screen.SignUpScreen.route) {
-//            SignUpScreen(navController = navController)
+//            SignUpScreen(navController = navController,viewModel)
         }
 
         composable(
@@ -44,7 +47,7 @@ fun SetupNavGraph(
             ShopScreen(navController = navController,viewModel)
         }
         composable(route = NavigationBarItemsGraph.Bag.route) {
-            BagScreen(navController = navController)
+            BagScreen(navController = navController,viewModel)
         }
         composable(route = NavigationBarItemsGraph.Favorites.route) {
             FavoritesScreen(navController = navController, viewModel)
@@ -80,5 +83,24 @@ fun SetupNavGraph(
             MoreProductScreen(navController = navController, viewModel,whatIsTitle)
         }
 
+        composable(
+            route = Screen.ProductByCategoryScreen.route,
+            arguments = listOf(
+                navArgument(
+                    Constants.Argument.CATEGORY_ID
+                ) {
+                    type = NavType.IntType
+                }
+            )
+        ) {
+            val categoryId = it.arguments?.getInt(Constants.Argument.CATEGORY_ID)
+            ProductByCategoryScreen(navController=navController, viewModel = viewModel,categoryId=categoryId.orDefault())
+        }
+
+        composable(
+            route = Screen.ProductARScreen.route,
+        ) {
+            ProductARScreen(navController = navController)
+        }
     }
 }

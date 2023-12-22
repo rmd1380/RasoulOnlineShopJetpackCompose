@@ -44,6 +44,7 @@ import androidx.navigation.NavController
 import com.technolearn.rasoulonlineshop.MainActivity
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
+import com.technolearn.rasoulonlineshop.helper.LottieComponent
 import com.technolearn.rasoulonlineshop.helper.ProductItem
 import com.technolearn.rasoulonlineshop.helper.ProductItemHorizontal
 import com.technolearn.rasoulonlineshop.mapper.toProductRes
@@ -115,31 +116,61 @@ fun FavoritesScreen(navController: NavController, viewModel: ShopViewModel) {
                 .fillMaxSize()
                 .padding(it)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                //Filter
-                Row(
+            if (productList.isNullOrEmpty()) {
+                LottieComponent(R.raw.empty_favorite)
+            } else {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(end = 16.dp, start = 16.dp, top = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    //Filter
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .clickable(
-                                interactionSource = MutableInteractionSource(),
-                                indication = null
-                            ) {
-                                showFilterOptionsBottomSheet = true
-                            }
+                            .fillMaxWidth()
+                            .padding(end = 16.dp, start = 16.dp, top = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clickable(
+                                    interactionSource = MutableInteractionSource(),
+                                    indication = null
+                                ) {
+                                    showFilterOptionsBottomSheet = true
+                                }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_swap_vert),
+                                contentDescription = "ic_swap_vert",
+                                tint = Black,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clickable(
+                                        interactionSource = MutableInteractionSource(),
+                                        indication = null
+                                    ) {
+                                        showFilterOptionsBottomSheet = true
+                                    }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = selectedFilterText,
+                                style = FontRegular11(Black),
+                                modifier = Modifier
+                                    .clickable(
+                                        interactionSource = MutableInteractionSource(),
+                                        indication = null
+                                    ) {
+                                        showFilterOptionsBottomSheet = true
+                                    }
+                            )
+                        }
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_swap_vert),
-                            contentDescription = "ic_swap_vert",
+                            painter = if (isList) painterResource(id = R.drawable.ic_view_grid)
+                            else painterResource(id = R.drawable.ic_view_list),
+                            contentDescription = "ic_view_list",
                             tint = Black,
                             modifier = Modifier
                                 .size(24.dp)
@@ -147,204 +178,179 @@ fun FavoritesScreen(navController: NavController, viewModel: ShopViewModel) {
                                     interactionSource = MutableInteractionSource(),
                                     indication = null
                                 ) {
-                                    showFilterOptionsBottomSheet = true
-                                }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = selectedFilterText,
-                            style = FontRegular11(Black),
-                            modifier = Modifier
-                                .clickable(
-                                    interactionSource = MutableInteractionSource(),
-                                    indication = null
-                                ) {
-                                    showFilterOptionsBottomSheet = true
+                                    isList = !isList
                                 }
                         )
                     }
-                    Icon(
-                        painter = if (isList) painterResource(id = R.drawable.ic_view_grid)
-                        else painterResource(id = R.drawable.ic_view_list),
-                        contentDescription = "ic_view_list",
-                        tint = Black,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable(
-                                interactionSource = MutableInteractionSource(),
-                                indication = null
-                            ) {
-                                isList = !isList
+                    if (showFilterOptionsBottomSheet) {
+                        ModalBottomSheet(
+                            sheetState = sheetState,
+                            onDismissRequest = {
+                                showFilterOptionsBottomSheet = false
                             }
-                    )
-                }
-                if (showFilterOptionsBottomSheet) {
-                    ModalBottomSheet(
-                        sheetState = sheetState,
-                        onDismissRequest = {
-                            showFilterOptionsBottomSheet = false
+                        ) {
+                            Text(
+                                text = stringResource(R.string.sort_by),
+                                style = FontSemiBold18(Black),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 32.dp, start = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                items(filterOptions.size) { index ->
+                                    Text(
+                                        text = filterOptions[index],
+                                        style = FontRegular16(Black),
+                                        textAlign = TextAlign.Start,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                showFilterOptionsBottomSheet =
+                                                    !showFilterOptionsBottomSheet
+                                                selectedFilterText = filterOptions[index]
+                                            }
+                                    )
+                                    Spacer(modifier = Modifier.height(32.dp))
+                                }
+                            }
                         }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.sort_by),
-                            style = FontSemiBold18(Black),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+
+                    //ProductItems
+                    if (isList) {
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 32.dp, start = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                                .padding(horizontal = 16.dp),
+                            contentPadding = PaddingValues(bottom = 16.dp)
                         ) {
-                            items(filterOptions.size) { index ->
-                                Text(
-                                    text = filterOptions[index],
-                                    style = FontRegular16(Black),
-                                    textAlign = TextAlign.Start,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            showFilterOptionsBottomSheet =
-                                                !showFilterOptionsBottomSheet
-                                            selectedFilterText = filterOptions[index]
-                                        }
-                                )
-                                Spacer(modifier = Modifier.height(32.dp))
-                            }
-                        }
-                    }
-                }
-
-                //ProductItems
-                if (isList) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        contentPadding = PaddingValues(bottom = 16.dp)
-                    ) {
-                        when (selectedFilterText) {
-                            context.getString(R.string.newest) -> {
-                                items(productList?.size.orDefault()) { index ->
-                                    ProductItemHorizontal(
-                                        productRes = productList?.sortedByDescending { productRes -> productRes.addDate }
-                                            ?.get(index)
-                                            ?.let { it1 -> toProductRes(it1) },
-                                        navController,
-                                        isNew = productList?.sortedByDescending { productRes -> productRes.addDate }
-                                            ?.get(index)?.addDate.orDefault() > MainActivity.minTimeForBeNew,
-                                        viewModel = viewModel
-                                    )
+                            when (selectedFilterText) {
+                                context.getString(R.string.newest) -> {
+                                    items(productList?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)
+                                                ?.let { it1 -> toProductRes(it1) },
+                                            navController,
+                                            isNew = productList?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)?.addDate.orDefault() > MainActivity.minTimeForBeNew,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
-                            }
 
-                            context.getString(R.string.popular) -> {
-                                items(productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
-                                    ProductItemHorizontal(
-                                        productRes = productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
-                                            ?.sortedByDescending { productRes -> productRes.rate }
-                                            ?.get(index)
-                                            ?.let { it1 -> toProductRes(it1) },
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                                context.getString(R.string.popular) -> {
+                                    items(productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
+                                                ?.sortedByDescending { productRes -> productRes.rate }
+                                                ?.get(index)
+                                                ?.let { it1 -> toProductRes(it1) },
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
-                            }
 
-                            context.getString(R.string.highest_to_low) -> {
-                                items(productList?.size.orDefault()) { index ->
-                                    ProductItemHorizontal(
-                                        productRes = productList?.sortedByDescending { productRes -> productRes.price }
-                                            ?.get(index)
-                                            ?.let { it1 -> toProductRes(it1) },
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                                context.getString(R.string.highest_to_low) -> {
+                                    items(productList?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.sortedByDescending { productRes -> productRes.price }
+                                                ?.get(index)
+                                                ?.let { it1 -> toProductRes(it1) },
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
-                            }
 
-                            context.getString(R.string.lowest_to_high) -> {
-                                items(productList?.size.orDefault()) { index ->
-                                    ProductItemHorizontal(
-                                        productRes = productList?.sortedBy { productRes -> productRes.price }
-                                            ?.get(index)
-                                            ?.let { it1 -> toProductRes(it1) },
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                                context.getString(R.string.lowest_to_high) -> {
+                                    items(productList?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.sortedBy { productRes -> productRes.price }
+                                                ?.get(index)
+                                                ?.let { it1 -> toProductRes(it1) },
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
-                } else {
-                    LazyVerticalGrid(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
-                        columns = GridCells.Fixed(2)
-                    ) {
-                        when (selectedFilterText) {
-                            context.getString(R.string.newest) -> {
-                                items(productList?.size.orDefault()) { index ->
-                                    ProductItem(
-                                        productRes = productList?.sortedByDescending { productRes -> productRes.addDate }
-                                            ?.get(index)
-                                            ?.let { it1 -> toProductRes(it1) },
-                                        navController = navController,
-                                        isNew = productList?.sortedByDescending { productRes -> productRes.addDate }
-                                            ?.get(index)?.addDate.orDefault() > MainActivity.minTimeForBeNew,
-                                        viewModel = viewModel
-                                    )
+                    } else {
+                        LazyVerticalGrid(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp),
+                            columns = GridCells.Fixed(2)
+                        ) {
+                            when (selectedFilterText) {
+                                context.getString(R.string.newest) -> {
+                                    items(productList?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)
+                                                ?.let { it1 -> toProductRes(it1) },
+                                            navController = navController,
+                                            isNew = productList?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)?.addDate.orDefault() > MainActivity.minTimeForBeNew,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
-                            }
 
-                            context.getString(R.string.popular) -> {
-                                items(productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
-                                    ProductItem(
-                                        productRes = productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
-                                            ?.sortedByDescending { productRes -> productRes.rate }
-                                            ?.get(index)
-                                            ?.let { it1 -> toProductRes(it1) },
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                                context.getString(R.string.popular) -> {
+                                    items(productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
+                                                ?.sortedByDescending { productRes -> productRes.rate }
+                                                ?.get(index)
+                                                ?.let { it1 -> toProductRes(it1) },
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
-                            }
 
-                            context.getString(R.string.highest_to_low) -> {
-                                items(productList?.size.orDefault()) { index ->
-                                    ProductItem(
-                                        productRes = productList?.sortedByDescending { productRes -> productRes.price }
-                                            ?.get(index)?.let { it1 -> toProductRes(it1) },
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                                context.getString(R.string.highest_to_low) -> {
+                                    items(productList?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.sortedByDescending { productRes -> productRes.price }
+                                                ?.get(index)?.let { it1 -> toProductRes(it1) },
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
-                            }
 
-                            context.getString(R.string.lowest_to_high) -> {
-                                items(productList?.size.orDefault()) { index ->
-                                    ProductItem(
-                                        productRes = productList?.sortedBy { productRes -> productRes.price }
-                                            ?.get(index)?.let { it1 -> toProductRes(it1) },
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                                context.getString(R.string.lowest_to_high) -> {
+                                    items(productList?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.sortedBy { productRes -> productRes.price }
+                                                ?.get(index)?.let { it1 -> toProductRes(it1) },
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+
         }
     }
 }

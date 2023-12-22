@@ -1,5 +1,6 @@
 package com.technolearn.rasoulonlineshop.helper
 
+import androidx.annotation.RawRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,9 +14,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,11 +29,19 @@ import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,10 +49,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
@@ -103,8 +121,6 @@ fun CustomRatingBar(
 }
 
 
-
-
 @Composable
 fun AddToFavorite(
     modifier: Modifier,
@@ -128,6 +144,38 @@ fun AddToFavorite(
                 painter = painterResource(id = if (isProductLikedState) R.drawable.ic_heart_filled else R.drawable.ic_heart_not_filled),
                 contentDescription = if (isProductLikedState) "Liked" else "Not Liked",
                 tint = if (isProductLikedState) Primary else Gray
+            )
+        }
+    }
+}
+
+@Composable
+fun CircleIconCard(
+    modifier: Modifier,
+    icon: Painter,
+    backgroundColor: Color = White,
+    iconTint:Color= Gray,
+    iconSize:Dp=16.dp,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier,
+        elevation = 4.dp,
+        shape = CircleShape,
+        backgroundColor = backgroundColor
+    ) {
+        IconButton(
+            modifier = Modifier
+                .fillMaxSize(),
+            onClick = {
+                onClick()
+            }
+        ) {
+            Icon(
+                modifier = Modifier.size(iconSize),
+                painter = icon,
+                contentDescription = null,
+                tint = iconTint,
             )
         }
     }
@@ -476,3 +524,82 @@ fun LoadingInColumn(modifier: Modifier, count: Int = 1) {
     }
 }
 
+@Composable
+fun QuantityControl(
+    quantity: Int,
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit,
+    onAddToCart: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        CustomButton(
+            modifier = Modifier,
+            size = ButtonSize.SMALL,
+            text = stringResource(R.string.add_to_cart),
+            onClick = onAddToCart,
+            iconStart = painterResource(R.drawable.ic_tick),
+            buttonTextStyle = FontRegular11(White)
+        )
+        Row(
+            modifier = Modifier.wrapContentWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircleIconCard(
+                modifier = Modifier
+                    .size(36.dp),
+                icon = painterResource(id = R.drawable.ic_subtract)
+            ) {
+                onDecrease()
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = quantity.toString(),
+                style = FontMedium14(Black),
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            CircleIconCard(
+                modifier = Modifier
+                    .size(36.dp),
+                icon = painterResource(id = R.drawable.ic_add)
+            ) {
+                onIncrease()
+            }
+        }
+
+    }
+}
+
+@Composable
+fun LottieComponent(@RawRes resId: Int) {
+    val isPlaying by remember { mutableStateOf(true) }
+    val speed by remember { mutableFloatStateOf(1f) }
+
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(resId))
+    val progress by animateLottieCompositionAsState(
+        composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = isPlaying,
+        speed = speed,
+        restartOnPlay = false
+    )
+
+    Column(
+        Modifier
+            .background(White)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        LottieAnimation(
+            composition = composition,
+            progress = { progress },
+            modifier = Modifier.size(300.dp)
+        )
+    }
+}

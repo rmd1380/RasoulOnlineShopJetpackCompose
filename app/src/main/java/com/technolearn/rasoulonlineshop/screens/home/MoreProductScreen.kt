@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -86,6 +87,9 @@ fun MoreProductScreen(
     }
 
     val productList by remember { viewModel.allProduct }.observeAsState()
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllProduct(0, 10)
+    }
     Scaffold(
         backgroundColor = Background,
         bottomBar = {

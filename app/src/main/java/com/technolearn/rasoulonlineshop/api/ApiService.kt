@@ -49,6 +49,12 @@ interface ApiService {
         @Query("pageSize") pageSize: Int
     ): Response<ApiResponse<List<ProductRes>>>
 
+    @GET("api/product/cat/{id}")
+    suspend fun getProductByCategoryId(
+        @Path("id") id: Int,
+        @Query("pageIndex") pageIndex: Int,
+        @Query("pageSize") pageSize: Int
+    ): Response<ApiResponse<List<ProductRes>>>
 
     @GET("api/product/{id}")
     suspend fun getProductById(

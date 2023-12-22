@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,8 +37,10 @@ import com.skydoves.landscapist.glide.GlideImage
 import com.technolearn.rasoulonlineshop.MainActivity
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
-import com.technolearn.rasoulonlineshop.helper.LoadingInColumn
+import com.technolearn.rasoulonlineshop.helper.LottieComponent
 import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
+import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
+import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
@@ -51,7 +52,6 @@ import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.enums.Status
 import com.technolearn.rasoulonlineshop.vo.res.CategoryRes
-import timber.log.Timber
 
 @Composable
 fun ShopScreen(navController: NavController, viewModel: ShopViewModel) {
@@ -74,7 +74,13 @@ fun ShopScreen(navController: NavController, viewModel: ShopViewModel) {
                 title = stringResource(R.string.categories),
                 style = FontSemiBold18(Black),
                 navigationIcon = ImageVector.vectorResource(R.drawable.ic_chevron_back),
-                navigationOnClick = { /*TODO*/ },
+                navigationOnClick = {
+                    navController.navigate(NavigationBarItemsGraph.Home.route) {
+                        popUpTo(NavigationBarItemsGraph.Home.route) {
+                            inclusive = true
+                        }
+                    }
+                },
                 actionOnclick = { /*TODO*/ }
             )
         }
@@ -85,59 +91,50 @@ fun ShopScreen(navController: NavController, viewModel: ShopViewModel) {
                 .fillMaxSize()
                 .padding(it)
         ) {
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                //Ads
-                item {
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
+            when(category?.status){
+                Status.LOADING -> {
+                    LottieComponent(resId = R.raw.main_progress)
+                }
+                Status.SUCCESS -> {
+                    LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .padding(horizontal = 16.dp, vertical = 16.dp)
-                            .clickable {
-
-                            },
-                        elevation = 2.dp,
-                        backgroundColor = Primary
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 28.dp)
-                        ) {
-                            Text(
-                                text = "AUTUMN SALES",
-                                style = FontSemiBold24(White),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Text(
-                                text = "Up to 50% off",
-                                style = FontMedium14(White),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
-                }
-                //Categories
-                when (category?.status) {
-                    Status.LOADING -> {
+                        //Ads
                         item {
-                            LoadingInColumn(
-                                Modifier
-                                    .fillMaxSize()
-                                    .height(100.dp)
-                            )
-                            Spacer(modifier = Modifier.height(18.dp))
+                            Card(
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                                    .clickable {
+
+                                    },
+                                elevation = 2.dp,
+                                backgroundColor = Primary
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 28.dp)
+                                ) {
+                                    Text(
+                                        text = "AUTUMN SALES",
+                                        style = FontSemiBold24(White),
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    Text(
+                                        text = "Up to 50% off",
+                                        style = FontMedium14(White),
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
                         }
-                        Timber.d("Slider::LOADING${category?.message}")
-                    }
-                    Status.SUCCESS -> {
+                        //Categories
                         items(category?.data?.data?.size.orDefault()) { categoryRes ->
                             CategoryItem(
                                 categoryRes = category?.data?.data?.get(categoryRes)
@@ -145,18 +142,12 @@ fun ShopScreen(navController: NavController, viewModel: ShopViewModel) {
                                 navController
                             )
                         }
-                        Timber.d("Slider::SUCCESS${category?.data}")
-                    }
-
-                    Status.ERROR -> {
-                        Timber.d("Slider::ERROR${category?.message}")
-                    }
-                    else -> {
-
                     }
                 }
-
+                Status.ERROR -> {}
+                else -> {}
             }
+
         }
     }
 }
@@ -170,7 +161,9 @@ fun CategoryItem(categoryRes: CategoryRes, navController: NavController) {
             .clip(RoundedCornerShape(8.dp))
             .padding(horizontal = 16.dp, vertical = 16.dp)
             .clickable {
-
+                navController.navigate(Screen.ProductByCategoryScreen.passCategoryId(categoryId = categoryRes.id.orDefault())) {
+                    restoreState = true
+                }
             },
         elevation = 2.dp
     ) {

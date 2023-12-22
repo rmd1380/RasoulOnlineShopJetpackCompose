@@ -37,8 +37,9 @@ import com.technolearn.rasoulonlineshop.MainActivity
 import com.technolearn.rasoulonlineshop.MainActivity.Companion.minTimeForBeNew
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomButton
-import com.technolearn.rasoulonlineshop.helper.LoadingInColumn
+import com.technolearn.rasoulonlineshop.helper.LottieComponent
 import com.technolearn.rasoulonlineshop.helper.ProductItem
+import com.technolearn.rasoulonlineshop.mapper.toSliderRes
 import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
 import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
@@ -61,11 +62,9 @@ import timber.log.Timber
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
-    val sliderData by remember { viewModel.allSlider }.observeAsState()
     val productList by remember { viewModel.allProduct }.observeAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.fetchAllSlider()
         viewModel.fetchAllProduct(0, 10)
     }
     Timber.d("viewModelProducts:::${productList}")
@@ -84,105 +83,79 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
                 .fillMaxSize()
                 .padding(it)
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                //Slider
-                when (sliderData?.status) {
-                    Status.LOADING -> {
+            when(productList?.status){
+                Status.LOADING -> {
+                    LottieComponent(R.raw.main_progress)
+                }
+                Status.SUCCESS -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        //Slider
                         item {
-                            LoadingInColumn(
-                                Modifier
-                                    .fillMaxSize()
-                                    .height(536.dp)
-                            )
-                            Spacer(modifier = Modifier.height(18.dp))
-                        }
-                        Timber.d("Slider::LOADING${sliderData?.message}")
-                    }
-
-                    Status.SUCCESS -> {
-                        item {
-                            val pagerState =
-                                rememberPagerState { sliderData?.data?.data?.size ?: 0 }
+                            val pagerState = rememberPagerState {
+                                minOf(
+                                    productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 4 }?.size.orDefault(),
+                                    7
+                                )
+                            }
                             HorizontalPager(
                                 state = pagerState,
                                 key = { index: Int ->
-                                    sliderData?.data?.data?.sortedBy { sliderRes -> sliderRes.id }
+                                    productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 4 }
                                         ?.get(index)?.id.orDefault()
                                 },
                             ) { index ->
                                 SliderItem(
-                                    sliderRes = sliderData?.data?.data?.sortedBy { sliderRes -> sliderRes.id }
-                                        ?.get(index) ?: SliderRes(),
+                                    sliderRes = toSliderRes(productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 4 }
+                                        ?.get(index) ?: ProductRes()),
                                     navController
                                 )
                             }
                             Spacer(modifier = Modifier.height(18.dp))
                         }
-                        Timber.d("Slider::SUCCESS${sliderData?.data}")
-                    }
-
-                    Status.ERROR -> {
-                        Timber.d("Slider::ERROR${sliderData?.message}")
-                    }
-
-                    else -> {}
-                }
-                //SomeText New-You've never seen it before!-View all
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 14.dp, start = 18.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.str_new),
-                                style = FontBold34(Black),
-                            )
-                            Text(
-                                text = stringResource(R.string.you_ve_never_seen_it_before),
-                                style = FontRegular11(Gray),
-                            )
-                        }
-                        Text(
-                            text = stringResource(R.string.view_all),
-                            style = FontRegular14(Black),
-                            modifier = Modifier.clickable {
-                                navController.navigate(Screen.MoreProductScreen.passWhatIsTitle("New"))
-                            }
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(18.dp))
-                }
-                //New Product Items
-                item {
-                    LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        when (productList?.status) {
-                            Status.LOADING -> {
-                                item {
-                                    LoadingInColumn(
-                                        Modifier
-                                            .fillMaxSize()
-                                            .height(250.dp)
+                        //SomeText New-You've never seen it before!-View all
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(end = 14.dp, start = 18.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column {
+                                    Text(
+                                        text = stringResource(R.string.str_new),
+                                        style = FontBold34(Black),
                                     )
-                                    Spacer(modifier = Modifier.height(18.dp))
+                                    Text(
+                                        text = stringResource(R.string.you_ve_never_seen_it_before),
+                                        style = FontRegular11(Gray),
+                                    )
                                 }
-                                Timber.d("ProductNew::LOADING${productList?.message}")
+                                Text(
+                                    text = stringResource(R.string.view_all),
+                                    style = FontRegular14(Black),
+                                    modifier = Modifier.clickable {
+                                        navController.navigate(Screen.MoreProductScreen.passWhatIsTitle("New"))
+                                    }
+                                )
                             }
-
-                            Status.SUCCESS -> {
+                            Spacer(modifier = Modifier.height(18.dp))
+                        }
+                        //New Product Items
+                        item {
+                            LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
                                 items(5) { index ->
                                     ProductItem(
-                                        productRes =   productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }?.get(index) ?: ProductRes(),
+                                        productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
+                                            ?.get(index) ?: ProductRes(),
                                         navController = navController,
-                                        isNew =   productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }?.get(index)?.addDate.orDefault() > minTimeForBeNew,
-                                        viewModel=viewModel
-                                        )
+                                        isNew = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
+                                            ?.get(index)?.addDate.orDefault() > minTimeForBeNew,
+                                        viewModel = viewModel
+                                    )
 //                                    isLiked = {
 //                                        viewModel.toggleAddToFavorites(
 //                                            productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }?.get(index)?.id.orDefault()
@@ -192,69 +165,47 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
                                 Timber.d("ProductNew::SUCCESS${productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }}")
                                 Timber.d("minTimeForBeNew${minTimeForBeNew.toHumanReadableDate()}")
                             }
-
-                            Status.ERROR -> {
-                                Timber.d("ProductNew::ERROR${productList?.message}")
-                            }
-
-                            else -> {}
+                            Spacer(modifier = Modifier.height(18.dp))
                         }
-
-                    }
-                    Spacer(modifier = Modifier.height(18.dp))
-                }
-                //SomeText Popular-Best products ever-View all
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 14.dp, start = 18.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.popular),
-                                style = FontBold34(Black),
-                            )
-                            Text(
-                                text = stringResource(R.string.best_products_ever),
-                                style = FontRegular11(Gray),
-                            )
-                        }
-                        Text(
-                            text = stringResource(id = R.string.view_all),
-                            style = FontRegular14(Black),
-                            modifier = Modifier.clickable {
-                                navController.navigate(Screen.MoreProductScreen.passWhatIsTitle("Popular"))
-                            }
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(18.dp))
-                }
-                //Popular Product Items
-                item {
-                    LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        when (productList?.status) {
-                            Status.LOADING -> {
-                                item {
-                                    LoadingInColumn(
-                                        Modifier
-                                            .fillMaxSize()
-                                            .height(250.dp)
+                        //SomeText Popular-Best products ever-View all
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(end = 14.dp, start = 18.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column {
+                                    Text(
+                                        text = stringResource(R.string.popular),
+                                        style = FontBold34(Black),
                                     )
-                                    Spacer(modifier = Modifier.height(18.dp))
+                                    Text(
+                                        text = stringResource(R.string.best_products_ever),
+                                        style = FontRegular11(Gray),
+                                    )
                                 }
-                                Timber.d("ProductPopular::LOADING${productList?.message}")
+                                Text(
+                                    text = stringResource(id = R.string.view_all),
+                                    style = FontRegular14(Black),
+                                    modifier = Modifier.clickable {
+                                        navController.navigate(Screen.MoreProductScreen.passWhatIsTitle("Popular"))
+                                    }
+                                )
                             }
-
-                            Status.SUCCESS -> {
+                            Spacer(modifier = Modifier.height(18.dp))
+                        }
+                        //Popular Product Items
+                        item {
+                            LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
                                 items(5) { index ->
                                     ProductItem(
-                                        productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.rate }?.get(index) ?: ProductRes(),
+                                        productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.rate }
+                                            ?.getOrNull(index) ?: ProductRes(),
                                         navController = navController,
                                         isNew = false,
-                                        viewModel=viewModel
+                                        viewModel = viewModel
                                     )
 //                                    {
 //                                        viewModel.toggleAddToFavorites(
@@ -262,17 +213,12 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
 //                                        )
 //                                    }
                                 }
-                                Timber.d("ProductPopular::SUCCESS${productList?.data}")
                             }
-
-                            Status.ERROR -> {
-                                Timber.d("ProductPopular::ERROR${productList?.message}")
-                            }
-
-                            else -> {}
                         }
                     }
                 }
+                Status.ERROR -> {}
+                else->{}
             }
         }
     }
@@ -319,11 +265,11 @@ fun SliderItem(sliderRes: SliderRes, navController: NavController) {
         ) {
             Text(
                 text = sliderRes.title.orDefault(),
-                style = FontBold34(White),
+                style = FontBold34(Black),
             )
             Text(
                 text = sliderRes.subTitle.orDefault(),
-                style = FontBold34(White),
+                style = FontBold34(Black),
             )
 
             CustomButton(

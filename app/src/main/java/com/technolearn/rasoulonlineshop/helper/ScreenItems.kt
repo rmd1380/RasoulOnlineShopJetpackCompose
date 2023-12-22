@@ -1,5 +1,6 @@
 package com.technolearn.rasoulonlineshop.helper
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,10 +34,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import androidx.room.PrimaryKey
 import com.skydoves.landscapist.glide.GlideImage
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.navigation.Screen
@@ -49,6 +54,7 @@ import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
+import com.technolearn.rasoulonlineshop.vo.entity.UserCartEntity
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import timber.log.Timber
@@ -97,7 +103,7 @@ fun ProductItem(
                         .fillMaxWidth()
                 ) {
                     GlideImage(
-                        imageModel = productRes?.image?.get(0) ?: "",
+                        imageModel = productRes?.image?.let { if (it.isNotEmpty()) it[0] else "" } ?: "",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(250.dp)
@@ -171,11 +177,15 @@ fun ProductItem(
                 Text(
                     text = productRes?.brand.orDefault(),
                     style = FontRegular11(Gray),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(5.dp))
                 Text(
                     text = productRes?.title.orDefault(),
                     style = FontSemiBold16(Black),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(
@@ -185,7 +195,9 @@ fun ProductItem(
                     Text(
                         text = "${productRes?.price}$",
                         style = FontMedium14(if (productRes?.hasDiscount.orDefault() > 0f) Gray else Black),
-                        textDecoration = if (productRes?.hasDiscount.orDefault() > 0f) TextDecoration.LineThrough else TextDecoration.None
+                        textDecoration = if (productRes?.hasDiscount.orDefault() > 0f) TextDecoration.LineThrough else TextDecoration.None,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     if (productRes?.hasDiscount.orDefault() > 0f) {
                         val discountAmount =
@@ -197,6 +209,8 @@ fun ProductItem(
                             modifier = Modifier.padding(start = 4.dp),
                             text = "${finalPrice}$",
                             style = FontMedium14(Primary),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -447,6 +461,163 @@ fun OrderItem(
     }
 }
 
+@Composable
+fun CartItem(
+    userCartEntity: UserCartEntity?,
+    navController: NavController,
+    viewModel: ShopViewModel,
+    more: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        Card(
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .clickable {
+                    navController.navigate(
+                        route = Screen.ProductDetailScreen.passProductId(
+                            userCartEntity?.id.orDefault()
+                        )
+                    )
+                    Timber.d("ProductScreen::::${userCartEntity?.id.orDefault()}")
+                },
+            elevation = 0.dp,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 8.dp)
+                    .aspectRatio(343f / 100f, true)
+                    .height(100.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                ) {
+                    GlideImage(
+                        imageModel = userCartEntity?.image ?: "",
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)),
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(15.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .progressSemantics()
+                                        .size(24.dp),
+                                    color = Black,
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        },
+                        failure = {
+                            Text(text = "image request failed.")
+                        })
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1.5f)
+                        .padding(top = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(start = 12.dp)
+                    ) {
+                        Text(
+                            text = userCartEntity?.name.orDefault(),
+                            style = FontSemiBold16(Black),
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.wrapContentWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.color),
+                                style = FontRegular11(Gray),
+                            )
+                            Text(
+                                text = userCartEntity?.color.orDefault(),
+                                style = FontRegular11(Black),
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = stringResource(R.string.size),
+                                style = FontRegular11(Gray),
+                            )
+                            Text(
+                                text = userCartEntity?.size.orDefault(),
+                                style = FontRegular11(Black),
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                modifier = Modifier.wrapContentWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircleIconCard(
+                                    modifier = Modifier
+                                        .size(36.dp),
+                                    icon = painterResource(id = R.drawable.ic_subtract)
+                                ) {
+                                    viewModel.decrementQuantity(userCartEntity?.id.orDefault())
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Text(
+                                    text = userCartEntity?.quantity.orDefault().toString(),
+                                    style = FontMedium14(Black),
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                CircleIconCard(
+                                    modifier = Modifier
+                                        .size(36.dp),
+                                    icon = painterResource(id = R.drawable.ic_add)
+                                ) {
+                                    viewModel.incrementQuantity(userCartEntity?.id.orDefault())
+                                }
+                            }
+                            Text(
+                                text = "${userCartEntity?.price}$",
+                                style = FontMedium14(Black),
+                            )
+                        }
+                    }
+
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_more),
+                        contentDescription = "ic_more",
+                        tint = Gray,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(24.dp)
+                            .clickable {
+                                more()
+                            }
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
@@ -459,10 +630,20 @@ fun DefaultPreview() {
         price = 100.0,
         hasDiscount = 10.0f
     )
+    val sampleUserCart = UserCartEntity(
+        id = 1,
+        name = "Test",
+        image = "",
+        color = "Black",
+        size = "XL",
+        price = 900.0,
+        quantity = 5
+    )
     Column {
 //        ProductItemHorizontal(sampleProductRes, rememberNavController()) {}
 //        ProductItem(sampleProductRes, rememberNavController()) {}
 //        profileItem("My orders", "Already have 12 orders") {}
-        OrderItem("25697", "5", "120", "20/3/2023") {}
+//        OrderItem("25697", "5", "120", "20/3/2023") {}
+//        CartItem(sampleUserCart, rememberNavController(),)
     }
 }

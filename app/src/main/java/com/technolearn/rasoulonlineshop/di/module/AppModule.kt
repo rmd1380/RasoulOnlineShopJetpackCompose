@@ -10,6 +10,7 @@ import com.technolearn.rasoulonlineshop.BuildConfig
 import com.technolearn.rasoulonlineshop.api.ApiService
 import com.technolearn.rasoulonlineshop.db.AppDatabase
 import com.technolearn.rasoulonlineshop.db.dao.FavoritesDao
+import com.technolearn.rasoulonlineshop.db.dao.UserCartDao
 import com.technolearn.rasoulonlineshop.di.UnsafeSSLConfig
 import com.technolearn.rasoulonlineshop.util.Constants
 import dagger.Module
@@ -90,5 +91,10 @@ class AppModule {
         return appDatabase.favoritesDao()
     }
 
+    @Provides
+    @Singleton
+    fun provideUserCartDao(appDatabase: AppDatabase): UserCartDao {
+        return appDatabase.userCartDao()
+    }
 
 }

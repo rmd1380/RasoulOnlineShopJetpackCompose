@@ -16,4 +16,12 @@ sealed class Screen(val route: String) {
             return this.route.replace(oldValue = "{${Constants.Argument.WHAT_IS_TITLE}}", newValue = whatIsTitle)
         }
     }
+
+    data object ProductByCategoryScreen : Screen("product_by_category_id_screen/{${Constants.Argument.CATEGORY_ID}}"){
+        fun passCategoryId(categoryId:Int): String {
+            return this.route.replace(oldValue = "{${Constants.Argument.CATEGORY_ID}}", newValue = categoryId.toString())
+        }
+    }
+
+    data object ProductARScreen : Screen("product_ar_screen")
 }
