@@ -1,6 +1,7 @@
 package com.technolearn.rasoulonlineshop.screens.auth
 
 import android.util.Patterns
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -20,21 +21,28 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import androidx.room.PrimaryKey
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomButton
 import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
@@ -47,11 +55,108 @@ import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Success
 import com.technolearn.rasoulonlineshop.ui.theme.White
+import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
+import com.technolearn.rasoulonlineshop.vm.ShopViewModel
+import com.technolearn.rasoulonlineshop.vo.entity.UserLoginEntity
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
+import com.technolearn.rasoulonlineshop.vo.enums.Status
+import com.technolearn.rasoulonlineshop.vo.req.LoginReq
+import com.technolearn.rasoulonlineshop.vo.req.SignUpReq
+import timber.log.Timber
+
+object LoginState {
+    var isLogin: Boolean by mutableStateOf(false)
+}
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, viewModel: ShopViewModel) {
+    val loginStatus by remember { viewModel.loginStatus }.observeAsState()
+    val context = LocalContext.current
+    LaunchedEffect(loginStatus) {
+        when (loginStatus?.status) {
+            Status.LOADING -> {
+                Timber.d("Login:::LOADING:::")
+            }
+
+            Status.SUCCESS -> {
+                Timber.d("Login:::SUCCESS:::${loginStatus?.data}")
+                when (loginStatus?.data?.status) {
+                    in 100..199 -> {
+                        Toast.makeText(context, loginStatus?.data?.message, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+
+                    in 200..299 -> {
+                        LoginState.isLogin = true
+                        viewModel.insertUser(
+                            UserLoginEntity(
+                                id = loginStatus?.data?.data?.id.orDefault(),
+                                username = loginStatus?.data?.data?.username.orDefault(),
+                                oldPassword = loginStatus?.data?.data?.oldPassword.orDefault(),
+                                password = loginStatus?.data?.data?.password.orDefault(),
+                                repeatPassword = loginStatus?.data?.data?.repeatPassword.orDefault(),
+                                email = loginStatus?.data?.data?.email.orDefault(),
+                                firstName = loginStatus?.data?.data?.firstName.orDefault(),
+                                lastName = loginStatus?.data?.data?.lastName.orDefault(),
+                                phone = loginStatus?.data?.data?.phone.orDefault(),
+                                addressName = loginStatus?.data?.data?.addressName.orDefault(),
+                                address = loginStatus?.data?.data?.address.orDefault(),
+                                city = loginStatus?.data?.data?.city.orDefault(),
+                                province = loginStatus?.data?.data?.province.orDefault(),
+                                postalCode = loginStatus?.data?.data?.postalCode.orDefault(),
+                                country = loginStatus?.data?.data?.country.orDefault(),
+                                customerId = loginStatus?.data?.data?.customerId.orDefault(),
+                                token = loginStatus?.data?.data?.token.orDefault(),
+                                isLogin = LoginState.isLogin
+                            )
+                        )
+                        navController.navigate(NavigationBarItemsGraph.Home.route) {
+                            popUpTo(NavigationBarItemsGraph.Home.route) {
+                                inclusive = true
+                            }
+                        }
+                    }
+
+                    in 300..399 -> {
+                        Toast.makeText(context, loginStatus?.data?.message, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+
+                    in 400..499 -> {
+                        Toast.makeText(context, loginStatus?.data?.message, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+
+                    in 500..599 -> {
+                        Toast.makeText(context, loginStatus?.data?.message, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+
+                    else -> {
+                    }
+                }
+            }
+
+            Status.ERROR -> {
+                Timber.d("Login:::ERROR:::${loginStatus}")
+
+            }
+
+            else -> {
+
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        viewModel.resetUpdateUserPasswordStatus()
+
+        onDispose {
+            // Additional cleanup or dispose of resources if needed
+        }
+    }
+
     Scaffold(
         backgroundColor = Background,
         bottomBar = {
@@ -224,6 +329,20 @@ fun LoginScreen(navController: NavController) {
                                 passwordHasError = true
                                 passwordLabel = "Password Can Not Be Empty"
                             }
+
+                            password.length < 8 -> {
+                                passwordHasError = true
+                                passwordLabel = "Password Is Weak AtLeast Contain 8 Character"
+                            }
+
+                            !emailHasError && !passwordHasError -> {
+                                viewModel.login(
+                                    LoginReq(
+                                        email = email,
+                                        password = password,
+                                    )
+                                )
+                            }
                         }
                     },
                     modifier = Modifier
@@ -249,5 +368,5 @@ fun LoginScreen(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun LoginViewPreview() {
-    LoginScreen(rememberNavController())
+    LoginScreen(rememberNavController(), viewModel())
 }

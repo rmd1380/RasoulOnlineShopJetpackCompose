@@ -8,24 +8,35 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Scaffold
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.technolearn.rasoulonlineshop.MainActivity
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CartItem
+import com.technolearn.rasoulonlineshop.helper.CustomButton
 import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
 import com.technolearn.rasoulonlineshop.helper.LottieComponent
 import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
 import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
+import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
@@ -36,12 +47,12 @@ import timber.log.Timber
 
 @Composable
 fun BagScreen(navController: NavController, viewModel: ShopViewModel) {
-    val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
+    val productInCartList by remember { viewModel.getAllUserCart() }.observeAsState()
+    var expanded by remember { mutableStateOf(false) }
+    LaunchedEffect(productInCartList) {
         viewModel.getAllUserCart()
     }
-    val productInCartList by remember { viewModel.userCartLiveData }.observeAsState()
     Timber.d("productInCartListBagScreen:::$productInCartList")
     Scaffold(
         backgroundColor = Background,
@@ -53,7 +64,7 @@ fun BagScreen(navController: NavController, viewModel: ShopViewModel) {
         },
         topBar = {
             CustomTopAppBar(
-                title = context.getString(R.string.my_bag),
+                title = stringResource(R.string.my_bag),
                 style = FontSemiBold18(Black),
                 navigationIcon = ImageVector.vectorResource(R.drawable.ic_chevron_back),
                 actionIcons = listOf(
@@ -72,7 +83,6 @@ fun BagScreen(navController: NavController, viewModel: ShopViewModel) {
                 actionOnclick = { /*TODO*/ }
             )
         }
-
     ) {
         Box(
             modifier = Modifier
@@ -97,13 +107,27 @@ fun BagScreen(navController: NavController, viewModel: ShopViewModel) {
                                 userCartEntity = productInCartList?.get(index),
                                 navController = navController,
                                 viewModel = viewModel,
-                                more = {}
+                                more = {
+
+                                }
                             )
+
                         }
                     }
-                }
-            }
 
+                }
+
+                CustomButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp),
+                    text = stringResource(R.string.check_out),
+                    onClick = {
+                        navController.navigate(route = Screen.CheckOutScreen.route)
+                    }
+                )
+            }
         }
     }
 }

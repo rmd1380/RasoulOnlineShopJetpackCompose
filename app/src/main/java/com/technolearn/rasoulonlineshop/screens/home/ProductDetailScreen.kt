@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -30,9 +29,7 @@ import androidx.compose.material.Text
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -57,15 +53,9 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.google.android.filament.Engine
-import com.google.ar.core.Anchor
-import com.google.ar.core.Config
-import com.google.ar.core.Frame
-import com.google.ar.core.Plane
-import com.google.ar.core.TrackingFailureReason
 import com.skydoves.landscapist.glide.GlideImage
+import com.technolearn.rasoulonlineshop.MainActivity
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.AddToFavorite
 import com.technolearn.rasoulonlineshop.helper.CircleIconCard
@@ -78,6 +68,7 @@ import com.technolearn.rasoulonlineshop.helper.LottieComponent
 import com.technolearn.rasoulonlineshop.helper.ProductItem
 import com.technolearn.rasoulonlineshop.helper.QuantityControl
 import com.technolearn.rasoulonlineshop.helper.Tag
+import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
 import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
 import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
@@ -97,29 +88,8 @@ import com.technolearn.rasoulonlineshop.vo.entity.UserCartEntity
 import com.technolearn.rasoulonlineshop.vo.enums.Status
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
-import io.github.sceneview.ar.ARScene
-import io.github.sceneview.ar.arcore.createAnchorOrNull
-import io.github.sceneview.ar.arcore.getUpdatedPlanes
-import io.github.sceneview.ar.arcore.isValid
-import io.github.sceneview.ar.getDescription
-import io.github.sceneview.ar.node.AnchorNode
-import io.github.sceneview.ar.rememberARCameraNode
-import io.github.sceneview.loaders.MaterialLoader
-import io.github.sceneview.loaders.ModelLoader
-import io.github.sceneview.model.ModelInstance
-import io.github.sceneview.node.CubeNode
-import io.github.sceneview.node.ModelNode
-import io.github.sceneview.rememberCollisionSystem
-import io.github.sceneview.rememberEngine
-import io.github.sceneview.rememberMaterialLoader
-import io.github.sceneview.rememberModelLoader
-import io.github.sceneview.rememberNodes
-import io.github.sceneview.rememberOnGestureListener
-import io.github.sceneview.rememberView
 import timber.log.Timber
-
-private const val kModelFile = "models/caterpillar_work_boot.glb"
-private const val kMaxModelInstances = 2
+import kotlin.math.roundToInt
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -134,8 +104,8 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
     var quantity by remember { mutableStateOf(0) }
     val context = LocalContext.current
     LaunchedEffect(Unit) {
-        viewModel.fetchAllProduct(0, 10)
-        viewModel.fetchProductById(50)
+        viewModel.fetchAllProduct(0, 160)
+        viewModel.fetchProductById(productId.orDefault())
     }
     Timber.d("isAddedToCart:::${isAddedToCart}::$productId::$userCartEntity")
     Scaffold(
@@ -172,6 +142,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                                             quantity = quantity
                                         )
                                     )
+                                    Toast.makeText(context, "Product Successfully Added to Cart", Toast.LENGTH_LONG).show()
                                 }
                             )
                         } else {
@@ -649,7 +620,7 @@ fun BrandRatePriceDesc(
                     finalPrice = productRes.price?.minus(discountAmount.orDefault()).orDefault()
                     Text(
                         modifier = Modifier.padding(start = 4.dp),
-                        text = "${finalPrice}$",
+                        text = "${finalPrice.roundToInt()}$",
                         style = FontSemiBold24(Primary),
                         textAlign = TextAlign.End
                     )

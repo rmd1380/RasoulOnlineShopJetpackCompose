@@ -14,11 +14,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.technolearn.rasoulonlineshop.MainActivity
@@ -26,15 +30,19 @@ import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
 import com.technolearn.rasoulonlineshop.helper.ProfileItem
 import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
+import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontBold34
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.White
+import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
+import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(navController: NavController,viewModel: ShopViewModel) {
+    val userLoggedInInfo by remember { viewModel.getLoggedInUser() }.observeAsState()
 
     Scaffold(
         backgroundColor = White,
@@ -83,18 +91,26 @@ fun ProfileScreen(navController: NavController) {
                         modifier = Modifier.size(64.dp)
                     )
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(text = "rasoul", style = FontSemiBold18(Black))
-                        Text(text = "rasoul@gmail.com", style = FontRegular14(Gray))
+                        Text(text = userLoggedInInfo?.username.orDefault(), style = FontSemiBold18(Black))
+                        Text(text = userLoggedInInfo?.email.orDefault(), style = FontRegular14(Gray))
                     }
                 }
                 Spacer(modifier = Modifier.height(28.dp))
-                ProfileItem(title = "My orders", subtitle = "Already have 12 orders") {}
+                ProfileItem(title = "My orders", subtitle = "See Your Orders") {
+                    navController.navigate(Screen.OrderScreen.route)
+                }
                 Spacer(modifier = Modifier.height(16.dp))
-                ProfileItem(title = "Shipping addresses", subtitle = "3 addresses") {}
+                ProfileItem(title = "Shipping addresses", subtitle = "Submit Addresses") {
+                    navController.navigate(Screen.ShippingAddressScreen.route)
+                }
                 Spacer(modifier = Modifier.height(16.dp))
-                ProfileItem(title = "Payment methods", subtitle = "Visa **34") {}
+                ProfileItem(title = "Payment methods", subtitle = "Credit Card") {
+                    navController.navigate(Screen.PaymentMethodsScreen.route)
+                }
                 Spacer(modifier = Modifier.height(16.dp))
-                ProfileItem(title = "Settings", subtitle = "password") {}
+                ProfileItem(title = "Settings", subtitle = "Password") {
+                    navController.navigate(Screen.SettingsScreen.route)
+                }
 
             }
         }
@@ -104,5 +120,5 @@ fun ProfileScreen(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun ProfileViewPreview() {
-    ProfileScreen(rememberNavController())
+    ProfileScreen(rememberNavController(), viewModel())
 }

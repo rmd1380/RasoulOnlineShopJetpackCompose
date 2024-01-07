@@ -10,7 +10,10 @@ import com.technolearn.rasoulonlineshop.BuildConfig
 import com.technolearn.rasoulonlineshop.api.ApiService
 import com.technolearn.rasoulonlineshop.db.AppDatabase
 import com.technolearn.rasoulonlineshop.db.dao.FavoritesDao
+import com.technolearn.rasoulonlineshop.db.dao.UserAddressDao
 import com.technolearn.rasoulonlineshop.db.dao.UserCartDao
+import com.technolearn.rasoulonlineshop.db.dao.UserCreditCardDao
+import com.technolearn.rasoulonlineshop.db.dao.UserLoginDao
 import com.technolearn.rasoulonlineshop.di.UnsafeSSLConfig
 import com.technolearn.rasoulonlineshop.util.Constants
 import dagger.Module
@@ -95,6 +98,22 @@ class AppModule {
     @Singleton
     fun provideUserCartDao(appDatabase: AppDatabase): UserCartDao {
         return appDatabase.userCartDao()
+    }
+    @Provides
+    @Singleton
+    fun provideUserLoginDao(appDatabase: AppDatabase): UserLoginDao {
+        return appDatabase.userLoginDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserAddressDao(appDatabase: AppDatabase): UserAddressDao {
+        return appDatabase.userAddressDao()
+    }
+    @Provides
+    @Singleton
+    fun provideUserCreditCardDao(appDatabase: AppDatabase): UserCreditCardDao {
+        return appDatabase.userCreditCardDao()
     }
 
 }

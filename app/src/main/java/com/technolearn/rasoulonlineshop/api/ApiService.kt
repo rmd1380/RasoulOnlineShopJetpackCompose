@@ -3,16 +3,21 @@ package com.technolearn.rasoulonlineshop.api
 import com.technolearn.rasoulonlineshop.vo.generics.ApiResponse
 import com.technolearn.rasoulonlineshop.vo.req.LoginReq
 import com.technolearn.rasoulonlineshop.vo.req.SignUpReq
+import com.technolearn.rasoulonlineshop.vo.req.UpdatePasswordReq
+import com.technolearn.rasoulonlineshop.vo.req.UpdateReq
 import com.technolearn.rasoulonlineshop.vo.res.CategoryRes
 import com.technolearn.rasoulonlineshop.vo.res.ColorRes
 import com.technolearn.rasoulonlineshop.vo.res.LoginRes
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import com.technolearn.rasoulonlineshop.vo.res.SignUpRes
 import com.technolearn.rasoulonlineshop.vo.res.SliderRes
+import com.technolearn.rasoulonlineshop.vo.res.UpdateRes
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -28,6 +33,18 @@ interface ApiService {
     suspend fun login(
         @Body loginReq: LoginReq
     ): Response<ApiResponse<LoginRes>>
+
+    @PUT("api/user/update")
+    suspend fun updateUser(
+        @Body updateReq: UpdateReq,
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<UpdateRes>>
+
+    @PUT("api/user/changePassword")
+    suspend fun updateUserPassword(
+        @Body updatePasswordReq: UpdatePasswordReq,
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<UpdateRes>>
 
     //endregion
 

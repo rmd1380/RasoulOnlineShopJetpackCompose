@@ -1,6 +1,7 @@
 package com.technolearn.rasoulonlineshop.screens.auth
 
 import android.util.Patterns
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -61,14 +64,49 @@ import timber.log.Timber
 
 @Composable
 fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
-//    val sliderData by remember { viewModel.register(createRequest()) }.observeAsState()
     val registerStatus by remember {viewModel.registerStatus}.observeAsState()
+    val context= LocalContext.current
+    LaunchedEffect(registerStatus) {
+        when (registerStatus?.status) {
+            Status.LOADING -> {
+                Timber.d("Register:::LOADING:::")
+            }
+            Status.SUCCESS -> {
+                Timber.d("Register:::SUCCESS:::${registerStatus?.data?.status}")
+                when (registerStatus?.data?.status) {
+                    in 100..199 -> {
+                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT).show()
+                    }
+                    in 200..299 -> {
+                        navController.navigate(Screen.LoginScreen.route)
+                    }
+                    in 300..399 -> {
+                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT).show()
+                    }
+                    in 400..499 -> {
+                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT).show()
+                    }
+                    in 500..599 -> {
+                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT).show()
+                    }
+                    else -> {
+                    }
+                }
+            }
+            Status.ERROR -> {
+                Timber.d("Register:::ERROR:::${registerStatus}")
+
+            }
+            else -> {
+
+            }
+        }
+    }
     DisposableEffect(Unit) {
         onDispose {
             viewModel.resetRegisterStatus() // Add a function to reset the status in your ViewModel
         }
     }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -194,14 +232,6 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                 onValueChange = { value ->
                     password = value
                     passwordHasError = password.isEmpty()
-//                        when {
-//                            password.isNotEmpty() -> {
-//                                passwordLabel = "Password"
-//                            }
-//                            password.length < 8 -> {
-//                                passwordLabel = "Password Is Weak AtLeast Contain 8 Character"
-//                            }
-//                        }
                     if (password.isNotEmpty() && password.length < 8) {
                         passwordLabel = "Password Is Weak AtLeast Contain 8 Character"
                         passwordHasError = true
@@ -314,30 +344,6 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                 size = ButtonSize.BIG,
                 roundCorner = 25.dp,
             )
-            when (registerStatus?.status) {
-                Status.LOADING -> {
-                    Timber.d("Register:::LOADING:::")
-                }
-                Status.SUCCESS -> {
-                    Timber.d("Register:::SUCCESS:::${registerStatus?.data?.status}")
-
-                    navController.navigate(Screen.LoginScreen.route)
-                }
-                Status.ERROR -> {
-                    Timber.d("Register:::ERROR:::${registerStatus}")
-
-                }
-                else -> {
-
-                }
-            }
-            Spacer(modifier = Modifier.height(125.dp))
-//            Text(
-//                text = "Or sign up with social account",
-//                style = FontMedium14(Black),
-//                textAlign = TextAlign.Center,
-//                modifier = Modifier.fillMaxWidth()
-//            )
         }
     }
 }

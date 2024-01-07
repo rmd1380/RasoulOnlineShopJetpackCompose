@@ -1,6 +1,8 @@
 package com.technolearn.rasoulonlineshop.helper
 
-import androidx.compose.foundation.Image
+import android.view.MenuItem
+import android.widget.PopupMenu
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,18 +23,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
@@ -40,24 +49,33 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import androidx.room.PrimaryKey
 import com.skydoves.landscapist.glide.GlideImage
 import com.technolearn.rasoulonlineshop.R
+import com.technolearn.rasoulonlineshop.mapper.toUpdateUserReq
 import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Black
+import com.technolearn.rasoulonlineshop.ui.theme.Error
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold16
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
+import com.technolearn.rasoulonlineshop.ui.theme.Success
+import com.technolearn.rasoulonlineshop.ui.theme.Warning
+import com.technolearn.rasoulonlineshop.ui.theme.White
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
+import com.technolearn.rasoulonlineshop.util.Extensions.orFalse
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
+import com.technolearn.rasoulonlineshop.vo.entity.UserAddressEntity
 import com.technolearn.rasoulonlineshop.vo.entity.UserCartEntity
+import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
+import com.technolearn.rasoulonlineshop.vo.enums.OrderState
+import com.technolearn.rasoulonlineshop.vo.enums.Status
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import timber.log.Timber
+import kotlin.math.roundToInt
 
 @Composable
 fun ProductItem(
@@ -103,7 +121,8 @@ fun ProductItem(
                         .fillMaxWidth()
                 ) {
                     GlideImage(
-                        imageModel = productRes?.image?.let { if (it.isNotEmpty()) it[0] else "" } ?: "",
+                        imageModel = productRes?.image?.let { if (it.isNotEmpty()) it[0] else "" }
+                            ?: "",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(250.dp)
@@ -207,7 +226,7 @@ fun ProductItem(
                         val finalPrice = productRes?.price?.minus(discountAmount.orDefault())
                         Text(
                             modifier = Modifier.padding(start = 4.dp),
-                            text = "${finalPrice}$",
+                            text = "${finalPrice?.roundToInt()}$",
                             style = FontMedium14(Primary),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -353,7 +372,7 @@ fun ProductItemHorizontal(
                             val finalPrice = productRes?.price?.minus(discountAmount.orDefault())
                             Text(
                                 modifier = Modifier.padding(start = 4.dp),
-                                text = "${finalPrice}$",
+                                text = "${finalPrice?.roundToInt()}$",
                                 style = FontMedium14(Primary),
                             )
                         }
@@ -424,6 +443,7 @@ fun OrderItem(
     quantity: String,
     totalAmount: String,
     orderDate: String,
+    orderState: OrderState,
     onClick: () -> Unit
 ) {
     Card {
@@ -446,17 +466,41 @@ fun OrderItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Quantity: $quantity", style = FontRegular14(Gray))
-                Text(text = "TotalAmount: $totalAmount$", style = FontRegular14(Gray))
+                Row() {
+                    Text(text = "Quantity: ", style = FontRegular14(Gray))
+                    Text(text = quantity, style = FontSemiBold16(Black))
+                }
+                Row {
+                    Text(text = "TotalAmount: ", style = FontRegular14(Gray))
+                    Text(text = "$totalAmount$", style = FontSemiBold16(Black))
+                }
             }
             Spacer(modifier = Modifier.height(24.dp))
-            CustomButton(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                text = "Details",
-                style = ButtonStyle.OUTLINED,
-                roundCorner = 24.dp,
-                onClick = onClick
-            )
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CustomButton(
+                    modifier = Modifier.wrapContentWidth(),
+                    text = "Details",
+                    size = ButtonSize.X_SMALL,
+                    style = ButtonStyle.OUTLINED,
+                    roundCorner = 24.dp,
+                    onClick = {
+                        onClick()
+                    }
+                )
+                Text(
+                    text = orderState.name,
+                    color = when(orderState){
+                        OrderState.Delivered->{Success}
+                        OrderState.Processing->{Warning}
+                        OrderState.Cancelled->{Error}
+                    }
+                )
+            }
+
         }
     }
 }
@@ -595,7 +639,7 @@ fun CartItem(
                                 }
                             }
                             Text(
-                                text = "${userCartEntity?.price}$",
+                                text = "${userCartEntity?.price?.roundToInt()}$",
                                 style = FontMedium14(Black),
                             )
                         }
@@ -615,6 +659,233 @@ fun CartItem(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ShippingAddressItem(
+    userAddressEntity: UserAddressEntity,
+    navController: NavController,
+    isChecked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    edit: () -> Unit,
+    delete: () -> Unit
+) {
+
+//    val userLoggedInInfo by remember { viewModel.getLoggedInUser() }.observeAsState()
+//    val updateUserStatus by remember { viewModel.updateUserStatus }.observeAsState()
+//    var myState by remember { mutableStateOf(false) }
+//    val addresses by remember { viewModel.getAllUserAddress() }.observeAsState()
+//    val addressIndex = addresses?.indexOf(userAddressEntity)?:-1
+//    myState = if (addressIndex != -1) {
+//        addresses?.get(addressIndex)?.isAddressSelected.orFalse()
+//    } else {
+//        false // or some default value
+//    }
+
+//    LaunchedEffect(updateUserStatus) {
+//        when (updateUserStatus?.status) {
+//            Status.LOADING -> {
+//                Timber.d("Update:::LOADING:::${updateUserStatus?.data?.status}")
+//            }
+//
+//            Status.SUCCESS -> {
+//                Timber.d("Update:::SUCCESS:::${updateUserStatus?.data}")
+//                if (myState) {
+//                    viewModel.updateUser(
+//                        userLoggedInInfo?.token.orDefault(),
+//                        toUpdateUserReq(userAddressEntity)
+//                    )
+//                    viewModel.updateUserAddress(userAddressEntity)
+//                }
+//            }
+//
+//            Status.ERROR -> {
+//                Timber.d("Update:::ERROR:::${updateUserStatus?.data?.status}")
+//            }
+//
+//            else -> {}
+//        }
+//    }
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable {},
+        elevation = 8.dp,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .aspectRatio(343f / 140f, true)
+                    .height(140.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1.5f)
+                        .padding(top = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                    ) {
+                        Text(
+                            text = "${userAddressEntity.firstName.orDefault()} ${userAddressEntity.lastName.orDefault()}",
+                            style = FontMedium14(Black),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = userAddressEntity.addressName.orDefault(),
+                            style = FontRegular14(Black),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = userAddressEntity.address.orDefault(),
+                            style = FontRegular14(Black),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                modifier = Modifier.wrapContentWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Checkbox(
+                                    checked = isChecked,
+                                    colors = CheckboxDefaults.colors(
+                                        uncheckedColor = Gray,
+                                        checkedColor = Black,
+                                        checkmarkColor = White
+                                    ),
+                                    onCheckedChange = { isChecked ->
+                                        onCheckedChange(isChecked)
+                                        // If you want to update the user address immediately when the checkbox is checked
+//                                        if (isChecked) {
+//                                            // Perform the necessary actions, e.g., update user address in the ViewModel
+//                                            viewModel.updateUserAddress(userAddressEntity.copy(isAddressSelected = true))
+//                                        }
+                                    }
+                                )
+
+
+                                Text(
+                                    text = stringResource(R.string.use_as_the_shipping_address),
+                                    style = FontRegular14(Black),
+                                )
+                            }
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_trash),
+                                contentDescription = "ic_trash",
+                                tint = Black,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clickable {
+                                        delete()
+                                    }
+                            )
+                        }
+                    }
+                    Text(
+                        text = "Edit",
+                        style = FontMedium14(Black),
+                        modifier = Modifier
+                            .wrapContentSize()
+                            .align(Alignment.TopEnd)
+                            .clickable {
+                                edit()
+                            },
+                        color = Primary
+                    )
+                }
+            }}
+    }
+}
+
+@Composable
+fun ShippingAddressItemCheckout(
+    userAddressEntity: UserAddressEntity,
+    change: () -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable {},
+        elevation = 8.dp,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .aspectRatio(343f / 140f, true)
+                    .height(140.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1.5f)
+                        .padding(top = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "${userAddressEntity.firstName.orDefault()} ${userAddressEntity.lastName.orDefault()}",
+                            style = FontMedium14(Black),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = userAddressEntity.addressName.orDefault(),
+                            style = FontRegular14(Black),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = userAddressEntity.address.orDefault(),
+                            style = FontRegular14(Black),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Text(
+                        text ="Change",
+                        style = FontMedium14(Black),
+                        modifier = Modifier
+                            .wrapContentSize()
+                            .align(Alignment.TopEnd)
+                            .clickable {
+                                change()
+                            },
+                        color = Primary
+                    )
+                }
+            }}
     }
 }
 
@@ -639,11 +910,31 @@ fun DefaultPreview() {
         price = 900.0,
         quantity = 5
     )
+    val sampleUserLogin = UserAddressEntity(
+        id = 1,
+        userId = 1,
+        firstName = "Rasoul",
+        lastName = "Motie",
+        phone = "String",
+        addressName = "Home",
+        address = "Qom-HazratMasomeh Boulevard",
+        city = "Qom",
+        province = "Qom",
+        postalCode = "123456789",
+        country = "String",
+    )
     Column {
 //        ProductItemHorizontal(sampleProductRes, rememberNavController()) {}
 //        ProductItem(sampleProductRes, rememberNavController()) {}
 //        profileItem("My orders", "Already have 12 orders") {}
-//        OrderItem("25697", "5", "120", "20/3/2023") {}
-//        CartItem(sampleUserCart, rememberNavController(),)
+        OrderItem("25697", "5", "120", "20/3/2023", OrderState.Cancelled) {}
+//        CartItem(sampleUserCart, rememberNavController(), viewModel()) {}
+//        ShippingAddressItem(
+//            userLoginEntity = sampleUserLogin,
+//            navController = rememberNavController(),
+//            viewModel(),
+//            change = {},
+//            delete = {}
+//        )
     }
 }

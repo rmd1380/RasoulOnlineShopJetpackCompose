@@ -65,7 +65,7 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
     val productList by remember { viewModel.allProduct }.observeAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.fetchAllProduct(0, 10)
+        viewModel.fetchAllProduct(0, 160)
     }
     Timber.d("viewModelProducts:::${productList}")
     Scaffold(

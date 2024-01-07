@@ -3,9 +3,12 @@ package com.technolearn.rasoulonlineshop.mapper
 import androidx.room.PrimaryKey
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vo.entity.FavoriteEntity
+import com.technolearn.rasoulonlineshop.vo.entity.UserAddressEntity
 import com.technolearn.rasoulonlineshop.vo.entity.UserCartEntity
+import com.technolearn.rasoulonlineshop.vo.req.UpdateReq
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import com.technolearn.rasoulonlineshop.vo.res.SliderRes
+import com.technolearn.rasoulonlineshop.vo.res.UpdateRes
 
 fun toFavoriteEntity(productRes: ProductRes): FavoriteEntity {
     return FavoriteEntity(
@@ -45,6 +48,20 @@ fun toSliderRes(productRes: ProductRes): SliderRes {
     )
 }
 
+fun toUpdateUserReq(userAddressEntity: UserAddressEntity): UpdateReq {
+    return UpdateReq(
+        userAddressEntity.userId,
+        userAddressEntity.firstName,
+        userAddressEntity.lastName,
+        userAddressEntity.phone ,
+        userAddressEntity.addressName,
+        userAddressEntity.address,
+        userAddressEntity.city,
+        userAddressEntity.province,
+        userAddressEntity.postalCode,
+        userAddressEntity.country,
+    )
+}
 //fun toUserCartEntity(productRes: ProductRes): UserCartEntity {
 //    return UserCartEntity(
 //        id = productRes.id,

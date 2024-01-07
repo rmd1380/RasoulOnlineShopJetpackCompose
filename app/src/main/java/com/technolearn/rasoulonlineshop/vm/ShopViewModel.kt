@@ -1,28 +1,38 @@
 package com.technolearn.rasoulonlineshop.vm
 
 import android.app.Application
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.technolearn.rasoulonlineshop.api.ApiService
 import com.technolearn.rasoulonlineshop.db.dao.FavoritesDao
+import com.technolearn.rasoulonlineshop.db.dao.UserAddressDao
 import com.technolearn.rasoulonlineshop.db.dao.UserCartDao
+import com.technolearn.rasoulonlineshop.db.dao.UserCreditCardDao
+import com.technolearn.rasoulonlineshop.db.dao.UserLoginDao
 import com.technolearn.rasoulonlineshop.mapper.toFavoriteEntity
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.util.Extensions.orFalse
+import com.technolearn.rasoulonlineshop.util.prepareToken
 import com.technolearn.rasoulonlineshop.util.safeApiCall
 import com.technolearn.rasoulonlineshop.vo.entity.FavoriteEntity
+import com.technolearn.rasoulonlineshop.vo.entity.UserAddressEntity
 import com.technolearn.rasoulonlineshop.vo.entity.UserCartEntity
+import com.technolearn.rasoulonlineshop.vo.entity.UserCreditCardEntity
+import com.technolearn.rasoulonlineshop.vo.entity.UserLoginEntity
 import com.technolearn.rasoulonlineshop.vo.generics.ApiResponse
 import com.technolearn.rasoulonlineshop.vo.generics.Resource
 import com.technolearn.rasoulonlineshop.vo.req.LoginReq
 import com.technolearn.rasoulonlineshop.vo.req.SignUpReq
+import com.technolearn.rasoulonlineshop.vo.req.UpdatePasswordReq
+import com.technolearn.rasoulonlineshop.vo.req.UpdateReq
 import com.technolearn.rasoulonlineshop.vo.res.CategoryRes
 import com.technolearn.rasoulonlineshop.vo.res.LoginRes
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import com.technolearn.rasoulonlineshop.vo.res.SignUpRes
+import com.technolearn.rasoulonlineshop.vo.res.UpdateRes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,18 +44,25 @@ class ShopViewModel @Inject constructor(
     private val application: Application,
     private val apiService: ApiService,
     private val favoritesDao: FavoritesDao,
-    private val userCartDao: UserCartDao
+    private val userCartDao: UserCartDao,
+    private val userLoginDao: UserLoginDao,
+    private val userAddressDao: UserAddressDao,
+    private val userCreditCardDao: UserCreditCardDao
 ) : ViewModel() {
 
 
     //region SignUp
     private val _registerStatus = MutableLiveData<Resource<ApiResponse<SignUpRes>>?>()
     val registerStatus: MutableLiveData<Resource<ApiResponse<SignUpRes>>?> = _registerStatus
-    private val _loginStatus = MutableLiveData<Resource<ApiResponse<LoginRes>>>()
-    val loginStatus: LiveData<Resource<ApiResponse<LoginRes>>> = _loginStatus
+    private val _loginStatus = MutableLiveData<Resource<ApiResponse<LoginRes>>?>()
+    val loginStatus: MutableLiveData<Resource<ApiResponse<LoginRes>>?> = _loginStatus
+    private val _updateUserStatus = MutableLiveData<Resource<ApiResponse<UpdateRes>>?>()
+    val updateUserStatus: MutableLiveData<Resource<ApiResponse<UpdateRes>>?> = _updateUserStatus
+    private val _updateUserPasswordStatus = MutableLiveData<Resource<ApiResponse<UpdateRes>>?>()
+    val updateUserPasswordStatus: MutableLiveData<Resource<ApiResponse<UpdateRes>>?> =
+        _updateUserPasswordStatus
+
     //endregion
-
-
     //region Product
     private val _allProduct = MutableLiveData<Resource<ApiResponse<List<ProductRes>>>>()
     val allProduct: LiveData<Resource<ApiResponse<List<ProductRes>>>> = _allProduct
@@ -54,24 +71,21 @@ class ShopViewModel @Inject constructor(
         _productByCategoryId
     private val _productById = MutableLiveData<Resource<ApiResponse<ProductRes>>>()
     val productById: LiveData<Resource<ApiResponse<ProductRes>>> = _productById
-    //endregion
 
+    //endregion
     private val _allCategory = MutableLiveData<Resource<ApiResponse<List<CategoryRes>>>>()
     val allCategory: LiveData<Resource<ApiResponse<List<CategoryRes>>>> = _allCategory
 
-    val userCartLiveData: MediatorLiveData<List<UserCartEntity>> = MediatorLiveData()
-    init {
-        getAllUserCart()
-    }
+    val isLoggedIn: LiveData<Boolean?> = userLoginDao.isUserLogin()
+
     fun getAllFavorite(): LiveData<List<FavoriteEntity>> {
         return favoritesDao.getAllFavoriteProducts()
     }
 
-    fun getAllUserCart() {
-        userCartLiveData.addSource(userCartDao.getAllUserCart()) { cartList ->
-            userCartLiveData.value = cartList
-        }
+    fun getAllUserCart(): LiveData<List<UserCartEntity>> {
+        return userCartDao.getAllUserCart()
     }
+
 
     fun getOneProductInUserCartById(id: Int): LiveData<UserCartEntity?> {
         return userCartDao.getUserCartById(id)
@@ -109,8 +123,49 @@ class ShopViewModel @Inject constructor(
             }
         }
     }
+
+    fun updateUser(token: String, updateReq: UpdateReq) {
+        viewModelScope.launch {
+            _updateUserStatus.value = Resource.loading(null)
+            try {
+                val response = safeApiCall(Dispatchers.IO) {
+                    apiService.updateUser(updateReq, prepareToken(token))
+                }
+                response.observeForever { resource ->
+                    _updateUserStatus.value = resource
+                }
+            } catch (e: Exception) {
+                _updateUserStatus.value = Resource.error(null, e.message, null, null, null)
+            }
+        }
+    }
+
+    fun updateUserPassword(token: String, updatePasswordReq: UpdatePasswordReq) {
+        viewModelScope.launch {
+            _updateUserPasswordStatus.value = Resource.loading(null)
+            try {
+                val response = safeApiCall(Dispatchers.IO) {
+                    apiService.updateUserPassword(updatePasswordReq, prepareToken(token))
+                }
+                response.observeForever { resource ->
+                    _updateUserPasswordStatus.value = resource
+                }
+            } catch (e: Exception) {
+                _updateUserPasswordStatus.value = Resource.error(null, e.message, null, null, null)
+            }
+        }
+    }
+
     fun resetRegisterStatus() {
         _registerStatus.value = null
+    }
+
+    fun resetLoginStatus() {
+        _loginStatus.value = null
+    }
+
+    fun resetUpdateUserPasswordStatus() {
+        _updateUserPasswordStatus.value = null
     }
     //endregion
 
@@ -179,8 +234,7 @@ class ShopViewModel @Inject constructor(
     //endregion
 
     //region Category
-    fun fetchAllCategory(
-    ) {
+    fun fetchAllCategory() {
         viewModelScope.launch {
             _allCategory.value = Resource.loading(null)
             try {
@@ -237,7 +291,7 @@ class ShopViewModel @Inject constructor(
         }
     }
 
-    fun deleteFromCart(userCartEntity: UserCartEntity) {
+    private fun deleteFromCart(userCartEntity: UserCartEntity) {
         viewModelScope.launch {
             userCartDao.deleteFromUserCart(userCartEntity)
         }
@@ -252,12 +306,84 @@ class ShopViewModel @Inject constructor(
     fun decrementQuantity(productId: Int) {
         viewModelScope.launch {
             userCartDao.decrementQuantity(productId)
-
-            val cartList = userCartLiveData.value.orEmpty()
-            val cartToUpdate = cartList.find { it.id == productId }
-            if (cartToUpdate != null && cartToUpdate.quantity.orDefault() == 1) {
-                deleteFromCart(cartToUpdate)
+            getAllUserCart().observeForever { resource ->
+                val cartList: List<UserCartEntity> = resource
+                val cartToUpdate = cartList.find { it.id == productId }
+                if (cartToUpdate != null && cartToUpdate.quantity.orDefault() == 0) {
+                    deleteFromCart(cartToUpdate)
+                }
+                Timber.d("cartList::$cartList")
+                Timber.d("cartToUpdate::$cartToUpdate")
             }
         }
+    }
+
+    fun insertUser(user: UserLoginEntity) {
+        viewModelScope.launch {
+            userLoginDao.insertUser(user)
+            Timber.d("userLoginRes:::::$user")
+        }
+    }
+
+    fun deleteUser(user: UserLoginEntity) {
+        viewModelScope.launch {
+            userLoginDao.deleteFromUser(user)
+        }
+    }
+
+    fun updateUserDB(user: UserLoginEntity) {
+        viewModelScope.launch {
+            userLoginDao.updateUser(user)
+            Timber.d("userLoginRes:::::Updated::$user")
+        }
+    }
+
+    fun getLoggedInUser(): LiveData<UserLoginEntity?> {
+        return userLoginDao.getLoggedInUser()
+    }
+
+    fun insertUserAddress(userAddress: UserAddressEntity) {
+        viewModelScope.launch {
+            userAddressDao.insertUserAddress(userAddress)
+        }
+    }
+
+    fun deleteUserAddress(userAddress: UserAddressEntity) {
+        viewModelScope.launch {
+            userAddressDao.deleteFromUserAddress(userAddress)
+        }
+    }
+
+    fun updateUserAddress(userAddress: UserAddressEntity) {
+        viewModelScope.launch {
+            userAddressDao.updateUserAddress(userAddress)
+        }
+    }
+
+    fun getAllUserAddress(): LiveData<List<UserAddressEntity>> {
+        return userAddressDao.getAllUserAddress()
+    }
+
+    //UserCreditCard
+    fun insertUserCreditCard(userCreditCard: UserCreditCardEntity) {
+        viewModelScope.launch {
+            userCreditCardDao.insertUserCreditCard(userCreditCard)
+        }
+    }
+
+    fun deleteUserCreditCard(userCreditCard: UserCreditCardEntity) {
+        viewModelScope.launch {
+            userCreditCardDao.deleteFromUserCreditCard(userCreditCard)
+        }
+    }
+
+    fun updateUserCreditCard(userCreditCard: UserCreditCardEntity) {
+        viewModelScope.launch {
+            userCreditCardDao.updateUserCreditCard(userCreditCard)
+        }
+    }
+
+    fun getAllUserCreditCard(): LiveData<List<UserCreditCardEntity>> {
+        return userCreditCardDao.getAllUserCreditCard()
     }
 }

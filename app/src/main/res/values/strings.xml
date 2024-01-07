@@ -28,4 +28,24 @@
 
     <string name="point_your_phone_down">Point your phone down at an empty space, and move it around slowly</string>
     <string name="tap_anywhere_to_add_model">Tap anywhere to add model</string>
+    <string name="shipping_address">Shipping Address</string>
+    <string name="payment_methods">Payment Methods</string>
+    <string name="add_shipping_address">Adding Shipping Address</string>
+    <string name="use_as_the_shipping_address">Use as the shipping address</string>
+    <string name="save_address">SAVE ADDRESS</string>
+    <string name="your_payment_card">Your payment card</string>
+    <string name="add_new_card">Add new card</string>
+    <string name="add_card">ADD CARD</string>
+    <string name="use_as_default_payment_method">Use as default payment method</string>
+    <string name="check_out">CHECK OUT</string>
+    <string name="checkout">Checkout</string>
+    <string name="personal_information">Personal Information</string>
+    <string name="date_of_birth">Date Of Birth</string>
+    <string name="password">Password</string>
+    <string name="change">Change</string>
+    <string name="star">*********</string>
+    <string name="password_change">Password Change</string>
+    <string name="save_changes">SAVE CHANGES</string>
+    <string name="card_holder_name">Card Holder Name</string>
+    <string name="expiry_date">Expiry Date</string>
 </resources>

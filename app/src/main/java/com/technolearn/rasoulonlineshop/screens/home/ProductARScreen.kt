@@ -54,7 +54,6 @@ import io.github.sceneview.rememberView
 private const val kModelFile = "models/gold_ring_for_female.glb"
 private const val kMaxModelInstances = 2
 
-
 @Composable
 fun ProductARScreen(navController: NavController) {
 

@@ -162,7 +162,7 @@ fun CategoryItem(categoryRes: CategoryRes, navController: NavController) {
             .padding(horizontal = 16.dp, vertical = 16.dp)
             .clickable {
                 navController.navigate(Screen.ProductByCategoryScreen.passCategoryId(categoryId = categoryRes.id.orDefault())) {
-                    restoreState = true
+                    restoreState = false
                 }
             },
         elevation = 2.dp

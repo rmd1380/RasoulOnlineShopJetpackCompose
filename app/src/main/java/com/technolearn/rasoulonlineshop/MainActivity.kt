@@ -7,9 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
 import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
 import com.technolearn.rasoulonlineshop.navigation.SetupNavGraph
 import com.technolearn.rasoulonlineshop.ui.theme.RasoulOnlineShopTheme
@@ -19,7 +24,8 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var navController: NavHostController
-    companion object{
+
+    companion object {
         const val minTimeForBeNew: Long = 1683996560
         val navList = listOf(
             BottomNavigationItem(
@@ -59,7 +65,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             navController = rememberNavController()
-
             RasoulOnlineShopTheme {
                 Scaffold(
                     bottomBar = {

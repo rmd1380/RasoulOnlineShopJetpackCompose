@@ -1,5 +1,8 @@
 package com.technolearn.rasoulonlineshop.helper
 
+import android.annotation.SuppressLint
+import android.app.DatePickerDialog
+import android.os.Build
 import androidx.annotation.RawRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -23,16 +26,17 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBar
@@ -45,13 +49,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieAnimation
@@ -61,18 +70,26 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.ui.theme.Black
+import com.technolearn.rasoulonlineshop.ui.theme.Error
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
+import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold11
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold16
+import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold24
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.White
+import com.technolearn.rasoulonlineshop.util.CardNumberParser
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
+import com.technolearn.rasoulonlineshop.vo.entity.UserCreditCardEntity
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
+import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CreditCardModel
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun CustomRatingBar(
@@ -154,8 +171,8 @@ fun CircleIconCard(
     modifier: Modifier,
     icon: Painter,
     backgroundColor: Color = White,
-    iconTint:Color= Gray,
-    iconSize:Dp=16.dp,
+    iconTint: Color = Gray,
+    iconSize: Dp = 16.dp,
     onClick: () -> Unit
 ) {
     Card(
@@ -181,6 +198,7 @@ fun CircleIconCard(
     }
 }
 
+@SuppressLint("UnrememberedMutableInteractionSource")
 @Composable
 fun DropDown(
     value: String,
@@ -244,6 +262,7 @@ fun DropDown(
     }
 }
 
+@SuppressLint("UnrememberedMutableInteractionSource")
 @Composable
 fun Tag(
     defaultValue: String,
@@ -338,8 +357,8 @@ fun CustomButton(
         ButtonSize.BIG -> {
             top = 18.dp
             bottom = 18.dp
-            left = 140.dp
-            right = 140.dp
+            left = 120.dp
+            right = 120.dp
         }
 
         ButtonSize.SMALL -> {
@@ -347,6 +366,13 @@ fun CustomButton(
             bottom = 12.dp
             left = 60.dp
             right = 60.dp
+        }
+
+        ButtonSize.X_SMALL -> {
+            top = 8.dp
+            bottom = 8.dp
+            left = 32.dp
+            right = 32.dp
         }
 
     }
@@ -422,6 +448,7 @@ fun CustomButton(
     }
 }
 
+@SuppressLint("UnrememberedMutableInteractionSource")
 @Composable
 fun Label(
     text: String,
@@ -600,6 +627,243 @@ fun LottieComponent(@RawRes resId: Int) {
             composition = composition,
             progress = { progress },
             modifier = Modifier.size(300.dp)
+        )
+    }
+}
+
+
+@Composable
+private fun CreditCardContainer(
+    backgroundColor: Color = Black,
+    model: CreditCardModel,
+    emptyChar: Char = 'x',
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(215.dp),
+        shape = RoundedCornerShape(dimensionResource(id = R.dimen.credit_card_round_corner)),
+        backgroundColor = backgroundColor,
+        elevation = 5.dp
+    ) {
+        val cardNumber = CardNumberParser(
+            number = model.number,
+            emptyChar = emptyChar
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(215.dp),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = 34.dp, start = 24.dp, end = 24.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.chip_credit_card),
+                    contentDescription = null,
+                    modifier = Modifier.size(36.dp)
+                )
+                Spacer(modifier = Modifier.height(18.dp))
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    style = FontSemiBold24(White),
+                    text = "${cardNumber.first} ${cardNumber.second} ${cardNumber.third} ${cardNumber.fourth}"
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(Gray),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(text = stringResource(R.string.card_holder_name), style = FontSemiBold11(Black))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(text = model.holderName, style = FontSemiBold16(Black))
+
+                    }
+                    Column {
+                        Text(text = stringResource(R.string.expiry_date), style = FontSemiBold11(Black))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = model.formattedExpiration.ifEmpty { "00/00" },
+                            style = FontSemiBold16(Black)
+                        )
+                    }
+                    model.logoCardIssuer?.let { safeLogoIssuer ->
+                        Image(
+                            painter = painterResource(safeLogoIssuer),
+                            contentDescription = null,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CreditCard(
+    userCreditCardEntity: UserCreditCardEntity,
+    emptyChar: Char = 'x',
+    backgroundColor: Color = Black,
+    isChecked:Boolean=false,
+    onCheckedChange: (Boolean) -> Unit,
+    deleteCard: () -> Unit
+) {
+    val model = CreditCardModel(
+        number = userCreditCardEntity.cardNumber,
+        expiration = userCreditCardEntity.cardExpirationDate,
+        holderName = userCreditCardEntity.cardName,
+        cvv2 = userCreditCardEntity.cvv2
+    )
+    Column(Modifier.fillMaxWidth()) {
+        CreditCardContainer(
+            model = model,
+            emptyChar = emptyChar,
+            backgroundColor = backgroundColor
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.wrapContentWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(
+                    checked = isChecked,
+                    onCheckedChange = {
+                        onCheckedChange(it)
+//                        if (isChecked) {
+//                            creditCards?.forEachIndexed { index, creditCard ->
+//                                // Deselect other checkboxes
+//                                if (index != creditCardIndex) {
+//                                    creditCard.isCardSelected = false
+//                                    // Update the ViewModel with the deselected address
+//                                    viewModel.updateUserCreditCard(creditCard)
+//                                }
+//                            }
+//
+//                            // Select the current checkbox
+//                            userCreditCardEntity.isCardSelected = true
+//
+//
+//                            // Update the ViewModel with the selected user address
+//                            viewModel.updateUserCreditCard(userCreditCardEntity)
+//                        } else {
+//                            // Handle the case when the checkbox is unchecked (optional)
+//                            // For example, you might want to reset some state or perform other actions
+//                        }
+                    },
+                )
+                Text(
+                    text = stringResource(R.string.use_as_default_payment_method),
+                    style = FontRegular14(Black),
+                )
+            }
+
+            Icon(
+                painter = painterResource(id = R.drawable.ic_trash),
+                contentDescription = "ic_trash",
+                tint = Black,
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable {
+                        deleteCard()
+                    }
+            )
+        }
+
+    }
+
+}
+@Composable
+fun DatePicker(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit = {},
+    pattern: String = "yyyy-MM-dd",
+) {
+    val formatter = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        DateTimeFormatter.ofPattern(pattern)
+    } else {
+        TODO("VERSION.SDK_INT < O")
+    }
+    val date = if (value.isNotBlank()) LocalDate.parse(value, formatter) else LocalDate.now()
+    val dialog = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        DatePickerDialog(
+            LocalContext.current,
+            { _, year, month, dayOfMonth ->
+                onValueChange(LocalDate.of(year, month + 1, dayOfMonth).toString())
+            },
+            date.year,
+            date.monthValue - 1,
+            date.dayOfMonth,
+        )
+    } else {
+        TODO("VERSION.SDK_INT < O")
+    }
+    TextField(
+        value = value,
+        label = {
+            Text(
+                text = label,
+                style = FontMedium14(Gray),
+            )
+        },
+        onValueChange = {
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp)
+            .border(
+                width = 1.dp,
+                color = Color.Transparent,
+                shape = RoundedCornerShape(4.dp)
+            )
+            .clickable { dialog.show() },
+        colors = TextFieldDefaults.textFieldColors(
+            backgroundColor = White,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            cursorColor = Black
+        ),
+        shape = RoundedCornerShape(4.dp),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+        singleLine = true,
+        enabled = false,
+    )
+}
+@Preview(name = "Credit card front side")
+@Composable
+private fun CreditCardPreview() {
+    Column(
+        modifier = Modifier.width(500.dp)
+    ) {
+        CreditCard(
+            userCreditCardEntity = UserCreditCardEntity(
+                cardName = "String",
+                cardNumber = "String",
+                cardExpirationDate = "String",
+                cvv2 = "String",
+            ),
+            isChecked = false,
+            onCheckedChange={},
+            deleteCard = {}
         )
     }
 }

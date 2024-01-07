@@ -24,4 +24,10 @@ sealed class Screen(val route: String) {
     }
 
     data object ProductARScreen : Screen("product_ar_screen")
+    data object ShippingAddressScreen : Screen("shipping_address_screen")
+    data object AddShippingAddressScreen : Screen("add_shipping_address_screen")
+    data object OrderScreen : Screen("order_screen")
+    data object PaymentMethodsScreen : Screen("payment_methods_screen")
+    data object CheckOutScreen : Screen("check_out_screen")
+    data object SettingsScreen : Screen("settings_screen")
 }

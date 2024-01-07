@@ -4,6 +4,7 @@ object Constants {
 
     object Base {
         const val MAIN_URL = "https://192.168.1.104:8080/"
+//        const val MAIN_URL = "https://192.168.1.7:8080/"
 //        const val MAIN_URL = "https://10.0.2.2:8080/"
     }
 
