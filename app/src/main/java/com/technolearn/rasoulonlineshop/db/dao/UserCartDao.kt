@@ -28,4 +28,7 @@ interface UserCartDao {
     @Query("UPDATE user_cart SET quantity = quantity - 1 WHERE id = :productId")
     suspend fun decrementQuantity(productId: Int)
 
+    @Query("DELETE FROM user_cart")
+    suspend fun deleteAll()
+
 }

@@ -17,7 +17,7 @@ import com.technolearn.rasoulonlineshop.vo.entity.UserLoginEntity
 
 @Database(
     entities = [FavoriteEntity::class, UserCartEntity::class, UserLoginEntity::class, UserAddressEntity::class, UserCreditCardEntity::class],
-    version = 9,
+    version = 13,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

@@ -36,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -94,18 +95,21 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel: ShopViewModel) {
+fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel: ShopViewModel,categoryId: Int?) {
 
-    val productList by remember { viewModel.allProduct }.observeAsState()
+    val productList by remember { viewModel.productByCategoryId }.observeAsState()
     val productRes by remember { viewModel.productById }.observeAsState()
     var isAddedToCart by remember { mutableStateOf(false) }
     var userCartEntity by remember { mutableStateOf(viewModel.getOneProductInUserCartById(productId.orDefault()).value) }
     var price by remember { mutableDoubleStateOf(0.0) }
-    var quantity by remember { mutableStateOf(0) }
+    var quantity by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         viewModel.fetchAllProduct(0, 160)
         viewModel.fetchProductById(productId.orDefault())
+    }
+    LaunchedEffect(Unit) {
+        viewModel.fetchProductByCategoryId(categoryId.orDefault(), 0, 160)
     }
     Timber.d("isAddedToCart:::${isAddedToCart}::$productId::$userCartEntity")
     Scaffold(
@@ -183,7 +187,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                 style = FontSemiBold18(Black),
                 navigationIcon = ImageVector.vectorResource(id = R.drawable.ic_chevron_back),
                 actionIcons = arrayListOf(
-                    CustomAction("Share", ImageVector.vectorResource(id = R.drawable.ic_share))
+                    CustomAction("Share",  painterResource(id = R.drawable.ic_share))
                 ),
                 navigationOnClick = {
                     navController.navigate(NavigationBarItemsGraph.Home.route) {
@@ -255,62 +259,64 @@ fun ProductDetailScreen(navController: NavController, productId: Int?, viewModel
                                     .fillMaxWidth()
                                     .padding(top = 20.dp), thickness = 0.4.dp, color = Gray
                             )
-                        }
-                        //Shipping info
-                        item {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.shipping_info),
-                                    style = FontRegular16(Black)
-                                )
-                                IconButton(onClick = { /*TODO*/ }) {
-                                    Icon(
-                                        imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_right),
-                                        contentDescription = "ic_chevron_right",
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                            Divider(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                thickness = 0.4.dp, color = Gray
-                            )
-                        }
-                        //Support
-                        item {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.support),
-                                    style = FontRegular16(Black)
-                                )
-                                IconButton(onClick = { /*TODO*/ }) {
-                                    Icon(
-                                        imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_right),
-                                        contentDescription = "ic_chevron_right",
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                            Divider(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                thickness = 0.4.dp, color = Gray
-                            )
                             Spacer(modifier = Modifier.height(18.dp))
                         }
+                        //Shipping info
+//                        item {
+//                            Row(
+//                                modifier = Modifier
+//                                    .fillMaxWidth()
+//                                    .padding(horizontal = 16.dp),
+//                                horizontalArrangement = Arrangement.SpaceBetween,
+//                                verticalAlignment = Alignment.CenterVertically,
+//                            ) {
+//                                Text(
+//                                    text = stringResource(R.string.shipping_info),
+//                                    style = FontRegular16(Black)
+//                                )
+//                                IconButton(onClick = { /*TODO*/ }) {
+//                                    Icon(
+//                                        imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_right),
+//                                        contentDescription = "ic_chevron_right",
+//                                        modifier = Modifier.size(16.dp)
+//                                    )
+//                                }
+//                            }
+//                            Divider(
+//                                modifier = Modifier
+//                                    .fillMaxWidth(),
+//                                thickness = 0.4.dp, color = Gray
+//                            )
+//                        }
+//                        //Support
+//                        item {
+//                            Row(
+//                                modifier = Modifier
+//                                    .fillMaxWidth()
+//                                    .padding(horizontal = 16.dp),
+//                                horizontalArrangement = Arrangement.SpaceBetween,
+//                                verticalAlignment = Alignment.CenterVertically,
+//                            ) {
+//                                Text(
+//                                    text = stringResource(R.string.support),
+//                                    style = FontRegular16(Black)
+//                                )
+//                                IconButton(onClick = { /*TODO*/ }) {
+//                                    Icon(
+//                                        imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_right),
+//                                        contentDescription = "ic_chevron_right",
+//                                        modifier = Modifier.size(16.dp)
+//                                    )
+//                                }
+//                            }
+//                            Divider(
+//                                modifier = Modifier
+//                                    .fillMaxWidth(),
+//                                thickness = 0.4.dp, color = Gray
+//                            )
+//
+//                        }
+
                         //youCanAlsoLikeThisText
                         item {
                             Row(
@@ -489,7 +495,7 @@ fun DropdownsWithAddFavorite(
                     icon = painterResource(id = R.drawable.ic_three_d_view),
                     iconSize = 24.dp
                 ) {
-                    navController.navigate(Screen.ProductARScreen.route)
+                    navController.navigate(Screen.ProductARScreen.passModelName(productRes.title.orDefault()))
                 }
             }
         }

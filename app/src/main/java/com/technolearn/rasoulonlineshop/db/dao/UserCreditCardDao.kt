@@ -20,4 +20,9 @@ interface UserCreditCardDao {
     @Query("SELECT * FROM user_credit_card")
     fun getAllUserCreditCard():LiveData<List<UserCreditCardEntity>>
 
+    @Query("UPDATE user_credit_card SET isCardSelected = 0 WHERE id != :creditCardId")
+    suspend fun clearSelectedCreditCardExcept(creditCardId:Long)
+
+    @Query("SELECT * FROM user_credit_card WHERE isCardSelected==1 LIMIT 1")
+    fun getSelectedUserCreditCard(): LiveData<UserCreditCardEntity>
 }

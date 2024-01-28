@@ -1,6 +1,8 @@
 package com.technolearn.rasoulonlineshop.db.converters
 
 import androidx.room.TypeConverter
+import com.google.gson.Gson
+import com.technolearn.rasoulonlineshop.vo.res.CategoryRes
 
 
 class Converters {
@@ -30,5 +32,17 @@ class Converters {
         } else {
             ArrayList(data.split(",").map { it })
         }
+    }
+
+    @TypeConverter
+    fun fromCategoryRes(categoryRes: CategoryRes?): String? {
+        // Convert CategoryRes to String (you can use a Gson converter or any other method)
+        return Gson().toJson(categoryRes)
+    }
+
+    @TypeConverter
+    fun toCategoryRes(categoryResString: String?): CategoryRes? {
+        // Convert String to CategoryRes (you can use a Gson converter or any other method)
+        return Gson().fromJson(categoryResString, CategoryRes::class.java)
     }
 }

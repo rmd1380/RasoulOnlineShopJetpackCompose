@@ -1,12 +1,11 @@
 package com.technolearn.rasoulonlineshop.screens.profile
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,20 +26,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
 import com.technolearn.rasoulonlineshop.helper.LottieComponent
@@ -52,24 +47,29 @@ import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
 import com.technolearn.rasoulonlineshop.ui.theme.White
+import com.technolearn.rasoulonlineshop.util.Constants
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.util.Extensions.orFalse
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.entity.UserAddressEntity
+import com.technolearn.rasoulonlineshop.vo.entity.UserCreditCardEntity
+import com.technolearn.rasoulonlineshop.vo.entity.UserLoginEntity
 import com.technolearn.rasoulonlineshop.vo.enums.Status
-import com.technolearn.rasoulonlineshop.vo.req.UpdateReq
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @Composable
 fun ShippingAddressScreen(navController: NavController, viewModel: ShopViewModel) {
     val context = LocalContext.current
     val userAddressList by remember { viewModel.getAllUserAddress() }.observeAsState()
-    var selectedAddressIndex by remember { mutableStateOf<Int?>(null) }
     val userLoggedInInfo by remember { viewModel.getLoggedInUser() }.observeAsState()
     val updateUserStatus by remember { viewModel.updateUserStatus }.observeAsState()
-    LaunchedEffect(Unit) {
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(userAddressList) {
         viewModel.getAllUserAddress()
+    }
+    LaunchedEffect(userLoggedInInfo) {
         viewModel.getLoggedInUser()
     }
     LaunchedEffect(updateUserStatus) {
@@ -77,12 +77,15 @@ fun ShippingAddressScreen(navController: NavController, viewModel: ShopViewModel
             Status.LOADING -> {
                 Timber.d("Update:::LOADING:::${updateUserStatus?.data?.status}")
             }
+
             Status.SUCCESS -> {
                 Timber.d("Update:::SUCCESS:::${updateUserStatus?.data}")
             }
+
             Status.ERROR -> {
                 Timber.d("Update:::ERROR:::${updateUserStatus?.data?.status}")
             }
+
             else -> {}
         }
     }
@@ -128,37 +131,88 @@ fun ShippingAddressScreen(navController: NavController, viewModel: ShopViewModel
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp)
                         ) {
                             items(userAddressList?.size.orDefault()) { index ->
-                                userAddressList?.get(index)?.let { it1 ->
-                                    ShippingAddressItem(
-                                        userAddressEntity = userAddressList.orEmpty()[index],
-                                        navController = navController,
-                                        isChecked = userAddressList.orEmpty()[index].isAddressSelected.orFalse(),
-                                        onCheckedChange = { isChecked ->
-                                            userAddressList.orEmpty()[index].isAddressSelected = isChecked
-                                            if(isChecked){
-                                                viewModel.updateUserAddress(userAddressList.orEmpty()[index])
-                                                viewModel.updateUser(userLoggedInInfo?.token.orDefault(), updateReq = toUpdateUserReq(userAddressList.orEmpty()[index]))
-                                            }else{
-                                                viewModel.updateUserAddress(userAddressList.orEmpty()[index])
+                                userAddressList?.get(index)?.let { userAddress ->
+                                    val deletedAddressList =
+                                        remember { mutableStateListOf<UserAddressEntity>() }
+                                    Timber.d("userAddress:::${userAddress.id}:::index:::$index")
+                                    val isSelected = userAddress.isAddressSelected
+                                    AnimatedVisibility(
+                                        visible = !deletedAddressList.contains(userAddress),
+                                        enter = fadeIn() + slideInHorizontally(),
+                                        exit = fadeOut() + slideOutHorizontally(
+                                            animationSpec = tween(
+                                                durationMillis = 1000
+                                            )
+                                        )
+                                    ) {
+                                        ShippingAddressItem(
+                                            userAddressEntity = userAddress,
+                                            navController = navController,
+                                            selected = isSelected,
+                                            onClick = {
+                                                viewModel.clearSelectedAddressesExcept(userAddress.id)
+                                                viewModel.updateUserAddress(
+                                                    userAddress.copy(
+                                                        isAddressSelected = true
+                                                    )
+                                                )
+                                                if (!isSelected) {
+                                                    viewModel.updateUser(
+                                                        userLoggedInInfo?.token.orDefault(),
+                                                        updateReq = toUpdateUserReq(userAddress)
+                                                    )
+                                                    viewModel.updateUserDB(
+                                                        user = UserLoginEntity(
+                                                            id = userAddress.userId.orDefault(),
+                                                            username = userLoggedInInfo?.username.orDefault(),
+                                                            oldPassword = userLoggedInInfo?.oldPassword.orDefault(),
+                                                            password = userLoggedInInfo?.password.orDefault(),
+                                                            repeatPassword = userLoggedInInfo?.repeatPassword.orDefault(),
+                                                            email = userLoggedInInfo?.email.orDefault(),
+                                                            firstName = userAddress.firstName.orDefault(),
+                                                            lastName = userAddress.lastName.orDefault(),
+                                                            phone = userAddress.phone.orDefault(),
+                                                            addressName = userAddress.addressName.orDefault(),
+                                                            address = userAddress.address.orDefault(),
+                                                            city = userAddress.city.orDefault(),
+                                                            province = userAddress.province.orDefault(),
+                                                            postalCode = userAddress.postalCode.orDefault(),
+                                                            country = userAddress.country.orDefault(),
+                                                            customerId = userLoggedInInfo?.customerId.orDefault(),
+                                                            token = userLoggedInInfo?.token.orDefault(),
+                                                            isLogin = userLoggedInInfo?.isLogin.orFalse(),
+                                                            dateOfBirth = userLoggedInInfo?.dateOfBirth.orDefault()
+                                                        )
+                                                    )
+                                                }
+                                            },
+                                            edit = {
+                                                navController.navigate(
+                                                    Screen.AddShippingAddressScreen.passIsEditAndId(
+                                                        true,
+                                                        userAddress.id.toInt()
+                                                    )
+                                                )
+                                            },
+                                            delete = {
+                                                deletedAddressList.add(userAddress)
+                                                scope.launch {
+                                                    delay(1000L)
+                                                    viewModel.deleteUserAddress(userAddress)
+                                                }
+
                                             }
-                                            selectedAddressIndex = if (isChecked) index else null
-                                        },
-                                        edit = {},
-                                        delete = {
-                                            viewModel.deleteUserAddress(userAddressList.orEmpty()[index])
-                                        }
-                                    )
+                                        )
+                                    }
                                     Spacer(modifier = Modifier.height(24.dp))
                                 }
                             }
-
-
                         }
                     }
                 }
             }
             FloatingActionButton(
-                onClick = { navController.navigate(Screen.AddShippingAddressScreen.route) },
+                onClick = { navController.navigate(Screen.AddShippingAddressScreen.passIsEditAndId(false,0)) },
                 shape = CircleShape,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -170,10 +224,4 @@ fun ShippingAddressScreen(navController: NavController, viewModel: ShopViewModel
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ShippingAddressScreen() {
-    ShippingAddressScreen(rememberNavController(), viewModel())
 }

@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -42,11 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import androidx.room.PrimaryKey
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomButton
 import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
-import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.Error
@@ -62,7 +59,6 @@ import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
 import com.technolearn.rasoulonlineshop.vo.enums.Status
 import com.technolearn.rasoulonlineshop.vo.req.LoginReq
-import com.technolearn.rasoulonlineshop.vo.req.SignUpReq
 import timber.log.Timber
 
 object LoginState {
@@ -150,9 +146,9 @@ fun LoginScreen(navController: NavController, viewModel: ShopViewModel) {
     }
 
     DisposableEffect(Unit) {
-        viewModel.resetUpdateUserPasswordStatus()
-
         onDispose {
+            viewModel.resetUpdateUserPasswordStatus()
+            viewModel.resetLoginStatus()
             // Additional cleanup or dispose of resources if needed
         }
     }
@@ -204,6 +200,7 @@ fun LoginScreen(navController: NavController, viewModel: ShopViewModel) {
                     style = FontBold34(Black),
                 )
                 ///////TextField
+                val maxChar = 50
                 var email by remember { mutableStateOf("") }
                 var emailHasError by remember { mutableStateOf(false) }
                 var emailIsValid by remember { mutableStateOf(false) }
@@ -237,7 +234,7 @@ fun LoginScreen(navController: NavController, viewModel: ShopViewModel) {
                         )
                     },
                     onValueChange = { value ->
-                        email = value
+                        if (value.length <= maxChar) email = value
                         emailHasError = email.isEmpty()
                         emailIsValid = Patterns.EMAIL_ADDRESS.matcher(email).matches()
                         emailLabel = if (email.isNotEmpty()) "Email" else "Email Can Not Be Empty"
@@ -271,7 +268,7 @@ fun LoginScreen(navController: NavController, viewModel: ShopViewModel) {
                         )
                     },
                     onValueChange = { value ->
-                        password = value
+                        if (value.length <= maxChar) password = value
                         passwordHasError = password.isEmpty()
 //                        when {
 //                            password.isNotEmpty() -> {

@@ -1,12 +1,14 @@
 package com.technolearn.rasoulonlineshop.api
 
 import com.technolearn.rasoulonlineshop.vo.generics.ApiResponse
+import com.technolearn.rasoulonlineshop.vo.req.InvoiceReq
 import com.technolearn.rasoulonlineshop.vo.req.LoginReq
 import com.technolearn.rasoulonlineshop.vo.req.SignUpReq
 import com.technolearn.rasoulonlineshop.vo.req.UpdatePasswordReq
 import com.technolearn.rasoulonlineshop.vo.req.UpdateReq
 import com.technolearn.rasoulonlineshop.vo.res.CategoryRes
 import com.technolearn.rasoulonlineshop.vo.res.ColorRes
+import com.technolearn.rasoulonlineshop.vo.res.InvoiceRes
 import com.technolearn.rasoulonlineshop.vo.res.LoginRes
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import com.technolearn.rasoulonlineshop.vo.res.SignUpRes
@@ -96,6 +98,22 @@ interface ApiService {
     suspend fun getColorById(
         @Path("id") id: Long
     ): Response<ApiResponse<ColorRes>>
+
+    //endregion
+
+    //region Invoice
+    @POST("api/invoice/{status}")
+    suspend fun addInvoice(
+        @Path("status") status:Int,
+        @Body invoiceReq: InvoiceReq,
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<InvoiceRes>>
+
+    @GET("api/invoice/user/{userId}")
+    suspend fun getAllInvoiceByUserId(
+        @Path("userId") id: Long,
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<List<InvoiceRes>>>
 
     //endregion
 

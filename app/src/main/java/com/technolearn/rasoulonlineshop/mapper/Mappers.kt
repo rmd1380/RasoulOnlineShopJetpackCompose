@@ -5,8 +5,13 @@ import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vo.entity.FavoriteEntity
 import com.technolearn.rasoulonlineshop.vo.entity.UserAddressEntity
 import com.technolearn.rasoulonlineshop.vo.entity.UserCartEntity
+import com.technolearn.rasoulonlineshop.vo.entity.UserLoginEntity
 import com.technolearn.rasoulonlineshop.vo.req.UpdateReq
+import com.technolearn.rasoulonlineshop.vo.res.CategoryRes
+import com.technolearn.rasoulonlineshop.vo.res.ColorRes
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
+import com.technolearn.rasoulonlineshop.vo.res.SignUpRes
+import com.technolearn.rasoulonlineshop.vo.res.SizeRes
 import com.technolearn.rasoulonlineshop.vo.res.SliderRes
 import com.technolearn.rasoulonlineshop.vo.res.UpdateRes
 
@@ -44,7 +49,8 @@ fun toSliderRes(productRes: ProductRes): SliderRes {
         image = productRes.image[0],
         link = null,
         subTitle = productRes.brand,
-        title = productRes.title
+        title = productRes.title,
+        category=productRes.category,
     )
 }
 
@@ -53,13 +59,44 @@ fun toUpdateUserReq(userAddressEntity: UserAddressEntity): UpdateReq {
         userAddressEntity.userId,
         userAddressEntity.firstName,
         userAddressEntity.lastName,
-        userAddressEntity.phone ,
+        userAddressEntity.phone,
         userAddressEntity.addressName,
         userAddressEntity.address,
         userAddressEntity.city,
         userAddressEntity.province,
         userAddressEntity.postalCode,
         userAddressEntity.country,
+    )
+}
+
+fun toSignUpRes(userLoginEntity: UserLoginEntity): SignUpRes {
+    return SignUpRes(
+        id = userLoginEntity.id,
+        userName = userLoginEntity.username.orDefault(),
+        password = userLoginEntity.password.orDefault(),
+        email = userLoginEntity.email.orDefault(),
+        customer = SignUpRes.Customer(
+            id = userLoginEntity.customerId.orDefault(),
+            firstName = userLoginEntity.firstName.orDefault(),
+            lastName = userLoginEntity.lastName.orDefault(),
+            phone = userLoginEntity.phone.orDefault(),
+            addressName = userLoginEntity.addressName.orDefault(),
+            address = userLoginEntity.address.orDefault(),
+            city = userLoginEntity.city.orDefault(),
+            province = userLoginEntity.province.orDefault(),
+            postalCode = userLoginEntity.postalCode.orDefault(),
+            country = userLoginEntity.country.orDefault()
+        )
+    )
+}
+fun toProductResByUserCartEntity(userCartEntity: UserCartEntity): ProductRes {
+    return ProductRes(
+        id = userCartEntity.id.orDefault(),
+        title = userCartEntity.name,
+        image = arrayListOf(userCartEntity.image.orDefault()),
+        colors = arrayListOf(ColorRes(title = userCartEntity.color.orDefault())),
+        sizes = arrayListOf(SizeRes(title = userCartEntity.size.orDefault())),
+        price = userCartEntity.price,
     )
 }
 //fun toUserCartEntity(productRes: ProductRes): UserCartEntity {

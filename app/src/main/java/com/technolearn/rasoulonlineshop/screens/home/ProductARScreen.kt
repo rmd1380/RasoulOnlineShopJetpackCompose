@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.Scaffold
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,12 +52,11 @@ import io.github.sceneview.rememberNodes
 import io.github.sceneview.rememberOnGestureListener
 import io.github.sceneview.rememberView
 
-private const val kModelFile = "models/gold_ring_for_female.glb"
-private const val kMaxModelInstances = 2
 
 @Composable
-fun ProductARScreen(navController: NavController) {
-
+fun ProductARScreen(navController: NavController, modelName: String) {
+    val kModelFile = "models/$modelName.glb"
+    val kMaxModelInstances = 2
     Scaffold(
         backgroundColor = Background,
         bottomBar = {},
@@ -67,21 +67,23 @@ fun ProductARScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(it)
         ) {
-            ARScreen()
+            ARScreen(kModelFile, kMaxModelInstances)
         }
     }
 }
 @Composable
-private fun ARScreen() {
+private fun ARScreen(kModelFile: String, kMaxModelInstances: Int) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background){
         Box(
             modifier = Modifier.fillMaxSize(),
         ) {
-            val childNodes = rememberNodes()
+            // The destroy calls are automatically made when their disposable effect leaves
+            // the composition or its key changes.
             val engine = rememberEngine()
             val modelLoader = rememberModelLoader(engine)
             val materialLoader = rememberMaterialLoader(engine)
             val cameraNode = rememberARCameraNode(engine)
+            val childNodes = rememberNodes()
             val view = rememberView(engine)
             val collisionSystem = rememberCollisionSystem(view)
 
@@ -126,7 +128,9 @@ private fun ARScreen() {
                                     modelLoader = modelLoader,
                                     materialLoader = materialLoader,
                                     modelInstances = modelInstances,
-                                    anchor = anchor
+                                    anchor = anchor,
+                                    kModelFile=kModelFile,
+                                    kMaxModelInstances=kMaxModelInstances
                                 )
                             }
                     }
@@ -148,24 +152,15 @@ private fun ARScreen() {
                                         modelLoader = modelLoader,
                                         materialLoader = materialLoader,
                                         modelInstances = modelInstances,
-                                        anchor = anchor
+                                        anchor = anchor,
+                                        kModelFile=kModelFile,
+                                        kMaxModelInstances=kMaxModelInstances
                                     )
                                 }
                         }
-                    },
-                    onScale = { detector, motionEvent, node ->
-                        // Handle scaling
-                        val scaleFactor = detector.scaleFactor
-                        cameraNode.scale *= scaleFactor
-                    },
-                    onRotate = { detector,motionEvent, node ->
-                        // Handle rotation
-//                        val rotationFactor = detector.rotationDegreesDelta
-//                        cameraNode.rotate(Vector3(0f, 1f, 0f), rotationFactor)
-                    }
-                )
+                    })
             )
-            androidx.compose.material3.Text(
+            Text(
                 modifier = Modifier
                     .systemBarsPadding()
                     .fillMaxWidth()
@@ -191,7 +186,9 @@ private fun createAnchorNode(
     modelLoader: ModelLoader,
     materialLoader: MaterialLoader,
     modelInstances: MutableList<ModelInstance>,
-    anchor: Anchor
+    anchor: Anchor,
+    kModelFile: String,
+    kMaxModelInstances: Int
 ): AnchorNode {
     val anchorNode = AnchorNode(engine = engine, anchor = anchor)
     val modelNode = ModelNode(
@@ -201,7 +198,7 @@ private fun createAnchorNode(
             }
         }.removeLast(),
         // Scale to fit in a 0.5 meters cube
-        scaleToUnits = 0.3f
+        scaleToUnits = 0.5f
     ).apply {
         // Model Node needs to be editable for independent rotation from the anchor rotation
         isEditable = true

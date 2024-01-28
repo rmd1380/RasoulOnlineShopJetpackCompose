@@ -2,10 +2,10 @@ package com.technolearn.rasoulonlineshop.vo.res
 
 data class SignUpRes(
     val id: Long,
-    val userName: String,
-    val password: String,
-    val email: String,
-    val customer: Customer?
+    val userName: String?=null,
+    val password: String?=null,
+    val email: String?=null,
+    val customer: Customer?=null
 ) {
     data class Customer(
         val id: Long?,

@@ -1,7 +1,9 @@
 package com.technolearn.rasoulonlineshop.vm
 
 import android.app.Application
-import androidx.lifecycle.LifecycleOwner
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -22,13 +24,16 @@ import com.technolearn.rasoulonlineshop.vo.entity.UserAddressEntity
 import com.technolearn.rasoulonlineshop.vo.entity.UserCartEntity
 import com.technolearn.rasoulonlineshop.vo.entity.UserCreditCardEntity
 import com.technolearn.rasoulonlineshop.vo.entity.UserLoginEntity
+import com.technolearn.rasoulonlineshop.vo.enums.SearchWidgetState
 import com.technolearn.rasoulonlineshop.vo.generics.ApiResponse
 import com.technolearn.rasoulonlineshop.vo.generics.Resource
+import com.technolearn.rasoulonlineshop.vo.req.InvoiceReq
 import com.technolearn.rasoulonlineshop.vo.req.LoginReq
 import com.technolearn.rasoulonlineshop.vo.req.SignUpReq
 import com.technolearn.rasoulonlineshop.vo.req.UpdatePasswordReq
 import com.technolearn.rasoulonlineshop.vo.req.UpdateReq
 import com.technolearn.rasoulonlineshop.vo.res.CategoryRes
+import com.technolearn.rasoulonlineshop.vo.res.InvoiceRes
 import com.technolearn.rasoulonlineshop.vo.res.LoginRes
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import com.technolearn.rasoulonlineshop.vo.res.SignUpRes
@@ -53,16 +58,16 @@ class ShopViewModel @Inject constructor(
 
     //region SignUp
     private val _registerStatus = MutableLiveData<Resource<ApiResponse<SignUpRes>>?>()
-    val registerStatus: MutableLiveData<Resource<ApiResponse<SignUpRes>>?> = _registerStatus
+    val registerStatus: LiveData<Resource<ApiResponse<SignUpRes>>?> = _registerStatus
     private val _loginStatus = MutableLiveData<Resource<ApiResponse<LoginRes>>?>()
-    val loginStatus: MutableLiveData<Resource<ApiResponse<LoginRes>>?> = _loginStatus
+    val loginStatus: LiveData<Resource<ApiResponse<LoginRes>>?> = _loginStatus
     private val _updateUserStatus = MutableLiveData<Resource<ApiResponse<UpdateRes>>?>()
-    val updateUserStatus: MutableLiveData<Resource<ApiResponse<UpdateRes>>?> = _updateUserStatus
+    val updateUserStatus: LiveData<Resource<ApiResponse<UpdateRes>>?> = _updateUserStatus
     private val _updateUserPasswordStatus = MutableLiveData<Resource<ApiResponse<UpdateRes>>?>()
-    val updateUserPasswordStatus: MutableLiveData<Resource<ApiResponse<UpdateRes>>?> =
+    val updateUserPasswordStatus: LiveData<Resource<ApiResponse<UpdateRes>>?> =
         _updateUserPasswordStatus
-
     //endregion
+
     //region Product
     private val _allProduct = MutableLiveData<Resource<ApiResponse<List<ProductRes>>>>()
     val allProduct: LiveData<Resource<ApiResponse<List<ProductRes>>>> = _allProduct
@@ -78,6 +83,12 @@ class ShopViewModel @Inject constructor(
 
     val isLoggedIn: LiveData<Boolean?> = userLoginDao.isUserLogin()
 
+    //region Invoice
+    private val _invoiceStatus = MutableLiveData<Resource<ApiResponse<InvoiceRes>>?>()
+    val invoiceStatus: LiveData<Resource<ApiResponse<InvoiceRes>>?> = _invoiceStatus
+    private val _invoiceByUserId = MutableLiveData<Resource<ApiResponse<List<InvoiceRes>>>>()
+    val invoiceByUserId: LiveData<Resource<ApiResponse<List<InvoiceRes>>>> = _invoiceByUserId
+    //endregion
     fun getAllFavorite(): LiveData<List<FavoriteEntity>> {
         return favoritesDao.getAllFavoriteProducts()
     }
@@ -162,6 +173,10 @@ class ShopViewModel @Inject constructor(
 
     fun resetLoginStatus() {
         _loginStatus.value = null
+    }
+
+    fun resetInvoiceStatus() {
+        _invoiceStatus.value = null
     }
 
     fun resetUpdateUserPasswordStatus() {
@@ -252,6 +267,50 @@ class ShopViewModel @Inject constructor(
 
     //endregion
 
+    //region Invoice
+    fun addInvoice(token: String, status: Int, invoiceReq: InvoiceReq) {
+        viewModelScope.launch {
+            _invoiceStatus.value = Resource.loading(null)
+            try {
+                val response = safeApiCall(Dispatchers.IO) {
+                    apiService.addInvoice(
+                        invoiceReq = invoiceReq,
+                        status = status,
+                        token = prepareToken(token)
+                    )
+                }
+                response.observeForever { resource ->
+                    _invoiceStatus.value = resource
+                }
+            } catch (e: Exception) {
+                _invoiceStatus.value = Resource.error(null, e.message, null, null, null)
+            }
+        }
+    }
+
+    fun fetchInvoiceByUserId(
+        userId: Long,
+        token: String
+    ) {
+        viewModelScope.launch {
+            _invoiceByUserId.value = Resource.loading(null)
+            try {
+                val result = safeApiCall(Dispatchers.IO) {
+                    apiService.getAllInvoiceByUserId(
+                        id = userId,
+                        token = prepareToken(token)
+                    )
+                }
+                result.observeForever { resource ->
+                    _invoiceByUserId.value = resource
+                }
+            } catch (e: Exception) {
+                _invoiceByUserId.value = Resource.error(null, e.message, null, null, null)
+            }
+        }
+    }
+    //endregion
+
     fun toggleAddToFavorites(productId: Int) {
         val product = _allProduct.value?.data?.data?.find { it.id == productId }
         viewModelScope.launch {
@@ -284,6 +343,7 @@ class ShopViewModel @Inject constructor(
         }
     }
 
+    // region Cart
     fun addToCart(userCartEntity: UserCartEntity) {
         viewModelScope.launch {
             userCartDao.insertUserCart(userCartEntity)
@@ -291,7 +351,7 @@ class ShopViewModel @Inject constructor(
         }
     }
 
-    private fun deleteFromCart(userCartEntity: UserCartEntity) {
+    fun deleteFromCart(userCartEntity: UserCartEntity) {
         viewModelScope.launch {
             userCartDao.deleteFromUserCart(userCartEntity)
         }
@@ -318,6 +378,14 @@ class ShopViewModel @Inject constructor(
         }
     }
 
+    fun deleteAllUserCart() {
+        viewModelScope.launch {
+            userCartDao.deleteAll()
+        }
+    }
+    // endregion
+
+    // region User
     fun insertUser(user: UserLoginEntity) {
         viewModelScope.launch {
             userLoginDao.insertUser(user)
@@ -342,6 +410,9 @@ class ShopViewModel @Inject constructor(
         return userLoginDao.getLoggedInUser()
     }
 
+    //endregion
+
+    //region UserAddress
     fun insertUserAddress(userAddress: UserAddressEntity) {
         viewModelScope.launch {
             userAddressDao.insertUserAddress(userAddress)
@@ -364,7 +435,18 @@ class ShopViewModel @Inject constructor(
         return userAddressDao.getAllUserAddress()
     }
 
-    //UserCreditCard
+    fun clearSelectedAddressesExcept(id: Long) {
+        viewModelScope.launch {
+            userAddressDao.clearSelectedAddressesExcept(id)
+        }
+    }
+
+    fun getUserAddressById(id:Int): LiveData<UserAddressEntity> {
+        return userAddressDao.getUserAddressById(id)
+    }
+    //endregion
+
+    //region UserCreditCard
     fun insertUserCreditCard(userCreditCard: UserCreditCardEntity) {
         viewModelScope.launch {
             userCreditCardDao.insertUserCreditCard(userCreditCard)
@@ -386,4 +468,40 @@ class ShopViewModel @Inject constructor(
     fun getAllUserCreditCard(): LiveData<List<UserCreditCardEntity>> {
         return userCreditCardDao.getAllUserCreditCard()
     }
+
+    fun clearSelectedCreditCardExcept(id: Long) {
+        viewModelScope.launch {
+            userCreditCardDao.clearSelectedCreditCardExcept(id)
+        }
+    }
+
+    fun getSelectedUserCreditCard(): LiveData<UserCreditCardEntity> {
+        return userCreditCardDao.getSelectedUserCreditCard()
+    }
+    //endregion
+
+
+    //region Search
+
+    private val _searchWidgetState: MutableState<SearchWidgetState> =
+        mutableStateOf(value = SearchWidgetState.CLOSED)
+    val searchWidgetState: State<SearchWidgetState> = _searchWidgetState
+
+    private val _searchTextState: MutableState<String> =
+        mutableStateOf(value = "")
+    val searchTextState: State<String> = _searchTextState
+
+    fun updateSearchWidgetState(newValue: SearchWidgetState) {
+        _searchWidgetState.value = newValue
+    }
+
+    fun updateSearchTextState(newValue: String) {
+        _searchTextState.value = newValue
+    }
+
+    fun resetTextAndState(){
+        _searchWidgetState.value = SearchWidgetState.CLOSED
+        _searchTextState.value = ""
+    }
+    //endregion
 }

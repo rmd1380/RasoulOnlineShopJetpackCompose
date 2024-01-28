@@ -64,39 +64,51 @@ import timber.log.Timber
 
 @Composable
 fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
-    val registerStatus by remember {viewModel.registerStatus}.observeAsState()
-    val context= LocalContext.current
+    val registerStatus by remember { viewModel.registerStatus }.observeAsState()
+    val context = LocalContext.current
     LaunchedEffect(registerStatus) {
         when (registerStatus?.status) {
             Status.LOADING -> {
                 Timber.d("Register:::LOADING:::")
             }
+
             Status.SUCCESS -> {
                 Timber.d("Register:::SUCCESS:::${registerStatus?.data?.status}")
                 when (registerStatus?.data?.status) {
                     in 100..199 -> {
-                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT)
+                            .show()
                     }
+
                     in 200..299 -> {
                         navController.navigate(Screen.LoginScreen.route)
                     }
+
                     in 300..399 -> {
-                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT)
+                            .show()
                     }
+
                     in 400..499 -> {
-                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT)
+                            .show()
                     }
+
                     in 500..599 -> {
-                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, registerStatus?.data?.message, Toast.LENGTH_SHORT)
+                            .show()
                     }
+
                     else -> {
                     }
                 }
             }
+
             Status.ERROR -> {
                 Timber.d("Register:::ERROR:::${registerStatus}")
 
             }
+
             else -> {
 
             }
@@ -126,6 +138,7 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                 style = FontBold34(Black),
             )
             ///////TextField
+            val maxChar = 50
             var name by remember { mutableStateOf("") }
             var nameHasError by remember { mutableStateOf(false) }
             var nameLabel by remember { mutableStateOf("Name") }
@@ -148,7 +161,7 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                     )
                 },
                 onValueChange = { value ->
-                    name = value
+                    if (value.length <= maxChar) name = value
                     nameHasError = name.isEmpty()
                     nameLabel = if (name.isNotEmpty()) "Name" else "Name Can Not Be Empty"
                 },
@@ -169,7 +182,7 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                 ),
                 shape = RoundedCornerShape(4.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                singleLine = true
+                singleLine = true,
             )
             Spacer(modifier = Modifier.height(8.dp))
             TextField(
@@ -196,7 +209,7 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                     )
                 },
                 onValueChange = { value ->
-                    email = value
+                    if (value.length <= maxChar) email = value
                     emailHasError = email.isEmpty()
                     emailIsValid = Patterns.EMAIL_ADDRESS.matcher(email).matches()
                     emailLabel = if (email.isNotEmpty()) "Email" else "Email Can Not Be Empty"
@@ -230,7 +243,7 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                     )
                 },
                 onValueChange = { value ->
-                    password = value
+                    if (value.length <= maxChar) password = value
                     passwordHasError = password.isEmpty()
                     if (password.isNotEmpty() && password.length < 8) {
                         passwordLabel = "Password Is Weak AtLeast Contain 8 Character"
@@ -320,7 +333,8 @@ fun SignUpScreen(navController: NavController, viewModel: ShopViewModel) {
                             passwordHasError = true
                             passwordLabel = "Password Can Not Be Empty"
                         }
-                        password.length<8 -> {
+
+                        password.length < 8 -> {
                             passwordHasError = true
                             passwordLabel = "Password Is Weak AtLeast Contain 8 Character"
                         }

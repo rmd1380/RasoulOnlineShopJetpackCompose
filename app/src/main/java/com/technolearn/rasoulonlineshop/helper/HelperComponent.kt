@@ -31,12 +31,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
+import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBar
@@ -48,16 +50,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -70,7 +75,6 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.ui.theme.Black
-import com.technolearn.rasoulonlineshop.ui.theme.Error
 import com.technolearn.rasoulonlineshop.ui.theme.FontMedium14
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
@@ -85,6 +89,7 @@ import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vo.entity.UserCreditCardEntity
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
+import com.technolearn.rasoulonlineshop.vo.enums.SearchWidgetState
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CreditCardModel
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
@@ -342,7 +347,8 @@ fun CustomButton(
     paddingRight: Dp = 0.dp,
     paddingTop: Dp = 0.dp,
     paddingBottom: Dp = 0.dp,
-    buttonTextStyle: TextStyle = FontRegular14(White)
+    buttonTextStyle: TextStyle = FontRegular14(White),
+    buttonColor: Color = Primary
 ) {
     var top = paddingTop
     var bottom = paddingBottom
@@ -378,9 +384,9 @@ fun CustomButton(
     }
     when (style) {
         ButtonStyle.CONTAINED -> {
-            background = if (enable) Primary else Primary.copy(alpha = 0.9f)
+            background = if (enable) buttonColor else buttonColor.copy(alpha = 0.6f)
             borderColor = Color.Transparent
-            textColor = if (enable) White else White.copy(alpha = 0.9f)
+            textColor = if (enable) White else White.copy(alpha = 0.8f)
         }
 
         ButtonStyle.OUTLINED -> {
@@ -484,6 +490,11 @@ fun Label(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomTopAppBar(
+    searchWidgetState: SearchWidgetState=SearchWidgetState.CLOSED,
+    searchTextState: String?=null,
+    onTextChange: ((String) -> Unit)? =null,
+    onCloseClicked: (() -> Unit)?=null,
+    onSearchClicked: ((String) -> Unit)?=null,
     title: String,
     style: TextStyle?,
     modifier: Modifier = Modifier,
@@ -491,45 +502,67 @@ fun CustomTopAppBar(
     actionIcons: List<CustomAction>? = null,
     navigationOnClick: () -> Unit,
     actionOnclick: (CustomAction) -> Unit,
+    tint: Color = Black,
 ) {
-    TopAppBar(
-        title = {
-            if (style != null) {
-                Text(
-                    text = title,
-                    style = style,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        navigationIcon = {
-            IconButton(onClick = navigationOnClick) {
-                navigationIcon?.let {
-                    Icon(
-                        imageVector = it,
-                        contentDescription = "navigation",
-                    )
-                }
-            }
-        },
-        actions = {
-            if (!actionIcons.isNullOrEmpty()) {
-                actionIcons.forEach { action ->
-                    IconButton(onClick = { actionOnclick(action) }) {
-                        Icon(
-                            imageVector = action.icon,
-                            contentDescription = action.name,
+    when (searchWidgetState) {
+        SearchWidgetState.CLOSED -> {
+            TopAppBar(
+                title = {
+                    if (style != null) {
+                        Text(
+                            text = title,
+                            style = style,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = navigationOnClick) {
+                        navigationIcon?.let {
+                            Icon(
+                                imageVector = it,
+                                contentDescription = "navigation",
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    if (!actionIcons.isNullOrEmpty()) {
+                        actionIcons.forEach { action ->
+                            IconButton(onClick = { actionOnclick(action) }) {
+                                Icon(
+                                    painter = action.icon,
+                                    contentDescription = action.name,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = tint
+                                )
+                            }
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = White
+                ),
+                scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
+            )
+        }
+
+        SearchWidgetState.OPENED -> {
+            onTextChange?.let {textChange->
+                onCloseClicked?.let { closeClicked ->
+                    onSearchClicked?.let { searchClicked ->
+                        SearchAppBar(
+                            text = searchTextState.orDefault(),
+                            onTextChange = textChange,
+                            onCloseClicked = closeClicked,
+                            onSearchClicked = searchClicked
                         )
                     }
                 }
             }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = White
-        ),
-        scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
-    )
+        }
+    }
 }
 
 @Composable
@@ -687,13 +720,19 @@ private fun CreditCardContainer(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text(text = stringResource(R.string.card_holder_name), style = FontSemiBold11(Black))
+                        Text(
+                            text = stringResource(R.string.card_holder_name),
+                            style = FontSemiBold11(Black)
+                        )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(text = model.holderName, style = FontSemiBold16(Black))
 
                     }
                     Column {
-                        Text(text = stringResource(R.string.expiry_date), style = FontSemiBold11(Black))
+                        Text(
+                            text = stringResource(R.string.expiry_date),
+                            style = FontSemiBold11(Black)
+                        )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = model.formattedExpiration.ifEmpty { "00/00" },
@@ -718,8 +757,8 @@ fun CreditCard(
     userCreditCardEntity: UserCreditCardEntity,
     emptyChar: Char = 'x',
     backgroundColor: Color = Black,
-    isChecked:Boolean=false,
-    onCheckedChange: (Boolean) -> Unit,
+    selected: Boolean,
+    onClick: () -> Unit,
     deleteCard: () -> Unit
 ) {
     val model = CreditCardModel(
@@ -741,34 +780,26 @@ fun CreditCard(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
-                modifier = Modifier.wrapContentWidth(),
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) {
+                        onClick()
+                    },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(
-                    checked = isChecked,
+                    checked = selected,
                     onCheckedChange = {
-                        onCheckedChange(it)
-//                        if (isChecked) {
-//                            creditCards?.forEachIndexed { index, creditCard ->
-//                                // Deselect other checkboxes
-//                                if (index != creditCardIndex) {
-//                                    creditCard.isCardSelected = false
-//                                    // Update the ViewModel with the deselected address
-//                                    viewModel.updateUserCreditCard(creditCard)
-//                                }
-//                            }
-//
-//                            // Select the current checkbox
-//                            userCreditCardEntity.isCardSelected = true
-//
-//
-//                            // Update the ViewModel with the selected user address
-//                            viewModel.updateUserCreditCard(userCreditCardEntity)
-//                        } else {
-//                            // Handle the case when the checkbox is unchecked (optional)
-//                            // For example, you might want to reset some state or perform other actions
-//                        }
+                        onClick()
                     },
+                    colors = CheckboxDefaults.colors(
+                        uncheckedColor = Gray,
+                        checkedColor = Black,
+                        checkmarkColor = White
+                    )
                 )
                 Text(
                     text = stringResource(R.string.use_as_default_payment_method),
@@ -791,6 +822,7 @@ fun CreditCard(
     }
 
 }
+
 @Composable
 fun DatePicker(
     label: String,
@@ -848,6 +880,88 @@ fun DatePicker(
         enabled = false,
     )
 }
+
+@Composable
+fun SearchAppBar(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onCloseClicked: () -> Unit,
+    onSearchClicked: (String) -> Unit,
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White),
+    )
+    {
+        TextField(modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+            value = text,
+            onValueChange = {
+                onTextChange(it)
+            },
+            placeholder = {
+                Text(
+                    modifier = Modifier.alpha(ContentAlpha.medium),
+                    text = "Search here...",
+                    style = FontMedium14(Gray)
+                )
+            },
+            singleLine = true,
+            leadingIcon = {
+                IconButton(
+                    modifier = Modifier,
+                    onClick = {
+                        onSearchClicked(text)
+                        keyboardController?.hide()
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_search),
+                        contentDescription = "Search Icon",
+                        tint = Black
+                    )
+                }
+            },
+            trailingIcon = {
+                IconButton(
+                    onClick = {
+                        if (text.isNotEmpty()) {
+                            onTextChange("")
+                        } else {
+                            onCloseClicked()
+                        }
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_cross),
+                        contentDescription = "Close Icon",
+                        tint = Black
+                    )
+                }
+            },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    onSearchClicked(text)
+                    keyboardController?.hide()
+                }
+            ),
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                cursorColor = Black
+            )
+        )
+    }
+}
+
 @Preview(name = "Credit card front side")
 @Composable
 private fun CreditCardPreview() {
@@ -861,8 +975,8 @@ private fun CreditCardPreview() {
                 cardExpirationDate = "String",
                 cvv2 = "String",
             ),
-            isChecked = false,
-            onCheckedChange={},
+            selected = false,
+            onClick = {},
             deleteCard = {}
         )
     }

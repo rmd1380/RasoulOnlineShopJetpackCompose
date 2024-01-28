@@ -28,8 +28,11 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.skydoves.landscapist.glide.GlideImage
@@ -37,17 +40,21 @@ import com.technolearn.rasoulonlineshop.MainActivity
 import com.technolearn.rasoulonlineshop.MainActivity.Companion.minTimeForBeNew
 import com.technolearn.rasoulonlineshop.R
 import com.technolearn.rasoulonlineshop.helper.CustomButton
+import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
 import com.technolearn.rasoulonlineshop.helper.LottieComponent
 import com.technolearn.rasoulonlineshop.helper.ProductItem
 import com.technolearn.rasoulonlineshop.mapper.toSliderRes
 import com.technolearn.rasoulonlineshop.navigation.BottomNavigationBar
+import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
 import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.FontBold34
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular14
+import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
 import com.technolearn.rasoulonlineshop.ui.theme.Gray
+import com.technolearn.rasoulonlineshop.ui.theme.Primary
 import com.technolearn.rasoulonlineshop.ui.theme.White
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.util.Extensions.toHumanReadableDate
@@ -55,6 +62,7 @@ import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
 import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
 import com.technolearn.rasoulonlineshop.vo.enums.Status
+import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import com.technolearn.rasoulonlineshop.vo.res.SliderRes
 import timber.log.Timber
@@ -76,22 +84,44 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
                 navController = navController,
             )
         },
-        topBar = {}
+        topBar = {
+            CustomTopAppBar(
+                title = stringResource(R.string.buy_now),
+                style = FontSemiBold18(Black),
+                actionIcons = listOf(
+                    CustomAction(
+                        "visualSearch",
+                        painterResource(id = R.drawable.ic_visual_search),
+                    )
+                ),
+                navigationOnClick = {},
+                actionOnclick = {
+                    when (it.name) {
+                        "visualSearch" -> {
+                            navController.navigate(Screen.VisualSearchScreen.route)
+                        }
+                    }
+                },
+                tint = Primary
+            )
+        }
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(it)
         ) {
-            when(productList?.status){
+            when (productList?.status) {
                 Status.LOADING -> {
                     LottieComponent(R.raw.main_progress)
                 }
+
                 Status.SUCCESS -> {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
                     ) {
+                        Timber.d("SUCCESSSUCCESSProduct:::$productList")
                         //Slider
                         item {
                             val pagerState = rememberPagerState {
@@ -138,7 +168,11 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
                                     text = stringResource(R.string.view_all),
                                     style = FontRegular14(Black),
                                     modifier = Modifier.clickable {
-                                        navController.navigate(Screen.MoreProductScreen.passWhatIsTitle("New"))
+                                        navController.navigate(
+                                            Screen.MoreProductScreen.passWhatIsTitle(
+                                                "New"
+                                            )
+                                        )
                                     }
                                 )
                             }
@@ -190,7 +224,11 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
                                     text = stringResource(id = R.string.view_all),
                                     style = FontRegular14(Black),
                                     modifier = Modifier.clickable {
-                                        navController.navigate(Screen.MoreProductScreen.passWhatIsTitle("Popular"))
+                                        navController.navigate(
+                                            Screen.MoreProductScreen.passWhatIsTitle(
+                                                "Popular"
+                                            )
+                                        )
                                     }
                                 )
                             }
@@ -217,8 +255,9 @@ fun ProductScreen(navController: NavController, viewModel: ShopViewModel) {
                         }
                     }
                 }
+
                 Status.ERROR -> {}
-                else->{}
+                else -> {}
             }
         }
     }
@@ -275,8 +314,9 @@ fun SliderItem(sliderRes: SliderRes, navController: NavController) {
             CustomButton(
                 onClick = {
                     navController.navigate(
-                        route = Screen.ProductDetailScreen.passProductId(
-                            sliderRes.id.orDefault()
+                        route = Screen.ProductDetailScreen.passProductIdAndCategoryId(
+                            sliderRes.id.orDefault(),
+                            sliderRes.category?.id.orDefault()
                         )
                     )
                 },

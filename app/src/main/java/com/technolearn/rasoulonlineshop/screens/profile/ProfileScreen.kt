@@ -41,7 +41,7 @@ import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 
 @Composable
-fun ProfileScreen(navController: NavController,viewModel: ShopViewModel) {
+fun ProfileScreen(navController: NavController, viewModel: ShopViewModel) {
     val userLoggedInInfo by remember { viewModel.getLoggedInUser() }.observeAsState()
 
     Scaffold(
@@ -91,24 +91,46 @@ fun ProfileScreen(navController: NavController,viewModel: ShopViewModel) {
                         modifier = Modifier.size(64.dp)
                     )
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(text = userLoggedInInfo?.username.orDefault(), style = FontSemiBold18(Black))
-                        Text(text = userLoggedInInfo?.email.orDefault(), style = FontRegular14(Gray))
+                        Text(
+                            text = userLoggedInInfo?.username.orDefault(),
+                            style = FontSemiBold18(Black)
+                        )
+                        Text(
+                            text = userLoggedInInfo?.email.orDefault(),
+                            style = FontRegular14(Gray)
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(28.dp))
-                ProfileItem(title = "My orders", subtitle = "See Your Orders") {
+                ProfileItem(
+                    title = "My orders",
+                    subtitle = "See Your Orders",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
                     navController.navigate(Screen.OrderScreen.route)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                ProfileItem(title = "Shipping addresses", subtitle = "Submit Addresses") {
+                ProfileItem(
+                    title = "Shipping addresses",
+                    subtitle = "Submit Addresses",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
                     navController.navigate(Screen.ShippingAddressScreen.route)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                ProfileItem(title = "Payment methods", subtitle = "Credit Card") {
+                ProfileItem(
+                    title = "Payment methods",
+                    subtitle = "Credit Card",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
                     navController.navigate(Screen.PaymentMethodsScreen.route)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                ProfileItem(title = "Settings", subtitle = "Password") {
+                ProfileItem(
+                    title = "Settings",
+                    subtitle = "Password",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
                     navController.navigate(Screen.SettingsScreen.route)
                 }
 

@@ -1,6 +1,6 @@
 package com.technolearn.rasoulonlineshop.vo.res
 
 data class SizeRes(
-    val id: Long?,
-    val title: String?,
+    val id: Long?=null,
+    val title: String?=null,
 )

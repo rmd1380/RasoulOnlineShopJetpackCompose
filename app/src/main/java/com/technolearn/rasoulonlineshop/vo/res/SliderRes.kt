@@ -5,5 +5,6 @@ data class SliderRes(
     var image: String? = null,
     var link: String? = null,
     var subTitle: String? = null,
-    var title: String? = null
+    var title: String? = null,
+    var category: CategoryRes? = CategoryRes(),
 )

@@ -45,7 +45,6 @@ class MainActivity : ComponentActivity() {
                 NavigationBarItemsGraph.Bag.route,
                 NavigationBarItemsGraph.Bag.selectedIcon,
                 NavigationBarItemsGraph.Bag.unSelectedIcon,
-                5
             ),
             BottomNavigationItem(
                 "Favorites",

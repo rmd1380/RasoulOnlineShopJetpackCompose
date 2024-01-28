@@ -1,6 +1,7 @@
 package com.technolearn.rasoulonlineshop.screens.profile
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -16,8 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -39,6 +38,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,11 +46,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.technolearn.rasoulonlineshop.R
@@ -58,10 +57,7 @@ import com.technolearn.rasoulonlineshop.helper.CreditCard
 import com.technolearn.rasoulonlineshop.helper.CustomButton
 import com.technolearn.rasoulonlineshop.helper.CustomTopAppBar
 import com.technolearn.rasoulonlineshop.helper.LottieComponent
-import com.technolearn.rasoulonlineshop.helper.ShippingAddressItem
-import com.technolearn.rasoulonlineshop.helper.Tag
 import com.technolearn.rasoulonlineshop.navigation.NavigationBarItemsGraph
-import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Background
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.Error
@@ -72,39 +68,40 @@ import com.technolearn.rasoulonlineshop.ui.theme.Gray
 import com.technolearn.rasoulonlineshop.ui.theme.White
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
-import com.technolearn.rasoulonlineshop.vo.entity.UserAddressEntity
 import com.technolearn.rasoulonlineshop.vo.entity.UserCreditCardEntity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel) {
-    val context = LocalContext.current
+//    val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
+    val userCreditCardList by remember { viewModel.getAllUserCreditCard() }.observeAsState()
+    LaunchedEffect(userCreditCardList) {
         viewModel.getAllUserCreditCard()
     }
-    val userCreditCardList by remember { viewModel.getAllUserCreditCard() }.observeAsState()
-    val visibleUserCreditCard = remember { mutableStateListOf<UserCreditCardEntity>() }
-
-    visibleUserCreditCard.clear()
-    visibleUserCreditCard.addAll(userCreditCardList.orEmpty())
-
+    val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState()
     var showAddCreditCardBottomSheet by rememberSaveable { mutableStateOf(false) }
 
+    val maxCharCardName = 30
     var cardName by remember { mutableStateOf("") }
     var cardNameHasError by remember { mutableStateOf(false) }
     var cardNameLabel by remember { mutableStateOf("Name on card") }
 
+    val maxCharCardNumber = 16
     var cardNumber by remember { mutableStateOf("") }
     var cardNumberHasError by remember { mutableStateOf(false) }
     var cardNumberLabel by remember { mutableStateOf("Card Number") }
 
+    val maxCharCardExpireDate = 4
     var cardExpireDate by remember { mutableStateOf("") }
     var cardExpireDateHasError by remember { mutableStateOf(false) }
     var cardExpireDateLabel by remember { mutableStateOf("Expire Date") }
 
+    val maxCharCardCvv2 = 4
     var cardCvv2 by remember { mutableStateOf("") }
     var cardCvv2HasError by remember { mutableStateOf(false) }
     var cardCvv2Label by remember { mutableStateOf("Cvv2") }
@@ -156,21 +153,45 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                 )
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
-                            items(visibleUserCreditCard.size) { index ->
-                                val userCreditCard = visibleUserCreditCard[index]
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter = fadeIn() + slideInHorizontally(),
-                                    exit = fadeOut() + slideOutHorizontally()
-                                ) {
-                                    CreditCard(
-                                        userCreditCardEntity = userCreditCard,
-                                        onCheckedChange={}
-                                    ){
-                                        viewModel.deleteUserCreditCard(userCreditCard)
+                            items(userCreditCardList?.size.orDefault()) { index ->
+                                userCreditCardList?.get(index)?.let { userCreditCard ->
+                                    val deletedCreditList =
+                                        remember { mutableStateListOf<UserCreditCardEntity>() }
+                                    Timber.d("userCreditCard:::${userCreditCard.id}:::index:::$index")
+                                    val isSelected = userCreditCard.isCardSelected
+                                    AnimatedVisibility(
+                                        visible = !deletedCreditList.contains(userCreditCard),
+                                        enter = fadeIn() + slideInHorizontally(),
+                                        exit = fadeOut() + slideOutHorizontally(
+                                            animationSpec = tween(
+                                                durationMillis = 1000
+                                            )
+                                        )
+                                    ) {
+                                        CreditCard(
+                                            userCreditCardEntity = userCreditCard,
+                                            selected = isSelected,
+                                            onClick = {
+                                                viewModel.clearSelectedCreditCardExcept(
+                                                    userCreditCard.id
+                                                )
+                                                viewModel.updateUserCreditCard(
+                                                    userCreditCard.copy(
+                                                        isCardSelected = true
+                                                    )
+                                                )
+                                            },
+                                            deleteCard = {
+                                                deletedCreditList.add(userCreditCard)
+                                                scope.launch {
+                                                    delay(1000L)
+                                                    viewModel.deleteUserCreditCard(userCreditCard)
+                                                }
+                                            }
+                                        )
                                     }
+                                    Spacer(modifier = Modifier.height(24.dp))
                                 }
-                                Spacer(modifier = Modifier.height(24.dp))
                             }
                         }
                     }
@@ -181,12 +202,24 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                     sheetState = sheetState,
                     onDismissRequest = {
                         showAddCreditCardBottomSheet = false
+                        cardName = ""
+                        cardNameHasError=false
+                        cardNameLabel="Name on card"
+                        cardNumber = ""
+                        cardNumberHasError=false
+                        cardNumberLabel="Card Number"
+                        cardExpireDate = ""
+                        cardExpireDateHasError=false
+                        cardExpireDateLabel="Expire Date"
+                        cardCvv2 = ""
+                        cardCvv2HasError=false
+                        cardCvv2Label="Cvv2"
                     }
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(end = 16.dp, start = 16.dp, bottom = 16.dp),
+                            .padding(end = 16.dp, start = 16.dp, bottom = 64.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -205,7 +238,7 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                 )
                             },
                             onValueChange = { value ->
-                                cardName = value
+                                if (value.length <= maxCharCardName) cardName = value
                                 cardNameHasError = cardName.isEmpty()
                                 cardNameLabel =
                                     if (cardName.isNotEmpty()) "Name on card" else "Card Name Can Not Be Empty"
@@ -225,7 +258,7 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                 cursorColor = Black
                             ),
                             shape = RoundedCornerShape(4.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                             singleLine = true
                         )
                         //endregion
@@ -240,7 +273,7 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                 )
                             },
                             onValueChange = { value ->
-                                cardNumber = value
+                                if (value.length <= maxCharCardNumber) cardNumber = value
                                 cardNumberHasError = cardNumber.isEmpty()
                                 cardNumberLabel =
                                     if (cardNumber.isNotEmpty()) "Card Number" else "Card Number Can Not Be Empty"
@@ -260,13 +293,14 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                 cursorColor = Black
                             ),
                             shape = RoundedCornerShape(4.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                             singleLine = true
                         )
                         //endregion
                         Spacer(modifier = Modifier.height(20.dp))
                         //region CardExpireDate
                         TextField(
+                            placeholder={ Text(text = "Y/M",style = FontMedium14(Gray))},
                             value = cardExpireDate,
                             label = {
                                 Text(
@@ -275,7 +309,7 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                 )
                             },
                             onValueChange = { value ->
-                                cardExpireDate = value
+                                if (value.length <= maxCharCardExpireDate) cardExpireDate = value
                                 cardExpireDateHasError = cardExpireDate.isEmpty()
                                 cardExpireDateLabel =
                                     if (cardExpireDate.isNotEmpty()) "Expire Date" else "Expire Date Can Not Be Empty"
@@ -295,7 +329,7 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                 cursorColor = Black
                             ),
                             shape = RoundedCornerShape(4.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                             singleLine = true
                         )
                         //endregion
@@ -310,7 +344,7 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                 )
                             },
                             onValueChange = { value ->
-                                cardCvv2 = value
+                                if (value.length <= maxCharCardCvv2) cardCvv2 = value
                                 cardCvv2HasError = cardCvv2.isEmpty()
                                 cardCvv2Label =
                                     if (cardCvv2.isNotEmpty()) "Cvv2" else "Cvv2 Can Not Be Empty"
@@ -330,7 +364,7 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                 cursorColor = Black
                             ),
                             shape = RoundedCornerShape(4.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                             singleLine = true
                         )
                         //endregion
@@ -351,6 +385,11 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                         cardNumberLabel = "Card Number Can Not Be Empty"
                                     }
 
+                                    cardNumber.length < 16 -> {
+                                        cardNumberHasError = true
+                                        cardNumberLabel = "Card Number Has 16 Number"
+                                    }
+
                                     cardExpireDate.isEmpty() -> {
                                         cardExpireDateHasError = true
                                         cardExpireDateLabel = "Expire Date Can Not Be Empty"
@@ -358,7 +397,7 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
 
                                     cardCvv2.isEmpty() -> {
                                         cardCvv2HasError = true
-                                        cardCvv2Label = "City Can Not Be Empty"
+                                        cardCvv2Label = "CVV2 Can Not Be Empty"
                                     }
 
                                     !cardNameHasError
@@ -374,10 +413,18 @@ fun PaymentMethodsScreen(navController: NavController, viewModel: ShopViewModel)
                                             )
                                         )
                                         showAddCreditCardBottomSheet = false
-                                        cardName=""
-                                        cardNumber=""
-                                        cardExpireDate=""
-                                        cardCvv2=""
+                                        cardName = ""
+                                        cardNameHasError=false
+                                        cardNameLabel="Name on card"
+                                        cardNumber = ""
+                                        cardNumberHasError=false
+                                        cardNumberLabel="Card Number"
+                                        cardExpireDate = ""
+                                        cardExpireDateHasError=false
+                                        cardExpireDateLabel="Expire Date"
+                                        cardCvv2 = ""
+                                        cardCvv2HasError=false
+                                        cardCvv2Label="Cvv2"
                                     }
                                 }
                             }

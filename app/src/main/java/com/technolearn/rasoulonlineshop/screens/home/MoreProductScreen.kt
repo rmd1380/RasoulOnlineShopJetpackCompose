@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -55,9 +56,12 @@ import com.technolearn.rasoulonlineshop.ui.theme.FontRegular11
 import com.technolearn.rasoulonlineshop.ui.theme.FontRegular16
 import com.technolearn.rasoulonlineshop.ui.theme.FontSemiBold18
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
+import com.technolearn.rasoulonlineshop.util.Extensions.orFalse
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
+import com.technolearn.rasoulonlineshop.vo.enums.SearchWidgetState
 import com.technolearn.rasoulonlineshop.vo.model.helperComponent.CustomAction
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +73,9 @@ fun MoreProductScreen(
     var isList by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     var showFilterOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
+    val searchWidgetState by remember { viewModel.searchWidgetState }
+    val searchTextState by remember { viewModel.searchTextState }
+    var query by remember { mutableStateOf("") }
     val context = LocalContext.current
     val filterOptions = arrayListOf(
         stringResource(id = R.string.popular),
@@ -90,6 +97,11 @@ fun MoreProductScreen(
     LaunchedEffect(Unit) {
         viewModel.fetchAllProduct(0, 160)
     }
+    DisposableEffect(Unit) {
+        viewModel.resetTextAndState()
+        onDispose {
+        }
+    }
     Scaffold(
         backgroundColor = Background,
         bottomBar = {
@@ -100,6 +112,19 @@ fun MoreProductScreen(
         },
         topBar = {
             CustomTopAppBar(
+                searchWidgetState = searchWidgetState,
+                searchTextState = searchTextState,
+                onTextChange = {
+                    viewModel.updateSearchTextState(newValue = it)
+                },
+                onCloseClicked = {
+                    viewModel.updateSearchWidgetState(newValue = SearchWidgetState.CLOSED)
+                    query = ""
+                },
+                onSearchClicked = {
+                    Timber.d("Searched Text::$it")
+                    query = it
+                },
                 title = when (whatIsTitle) {
                     stringResource(id = R.string.str_new) -> {
                         stringResource(id = R.string.str_new)
@@ -116,7 +141,7 @@ fun MoreProductScreen(
                 actionIcons = listOf(
                     CustomAction(
                         "search",
-                        ImageVector.vectorResource(R.drawable.ic_search)
+                        painterResource(id = R.drawable.ic_search)
                     )
                 ),
                 navigationOnClick = {
@@ -126,7 +151,13 @@ fun MoreProductScreen(
                         }
                     }
                 },
-                actionOnclick = { /*TODO*/ }
+                actionOnclick = {
+                    when (it.name) {
+                        "search" -> {
+                            viewModel.updateSearchWidgetState(newValue = SearchWidgetState.OPENED)
+                        }
+                    }
+                }
             )
         }
     ) {
@@ -243,58 +274,151 @@ fun MoreProductScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        contentPadding = PaddingValues(bottom = 16.dp)
+                            .padding(16.dp),
+                        contentPadding = PaddingValues(bottom = 8.dp)
                     ) {
-                        when (selectedFilterText) {
-                            context.getString(R.string.newest) -> {
-                                items(productList?.data?.data?.size.orDefault()) { index ->
-                                    ProductItemHorizontal(
-                                        productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
-                                            ?.get(index) ?: ProductRes(),
-                                        navController,
-                                        isNew = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
-                                            ?.get(index)?.addDate.orDefault() > minTimeForBeNew,
-                                        viewModel = viewModel
-                                    )
+                        if (query.isEmpty()) {
+                            when (selectedFilterText) {
+
+                                context.getString(R.string.newest) -> {
+                                    items(productList?.data?.data?.filter { productRes -> productRes.addDate.orDefault() >= minTimeForBeNew }?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.data?.data?.filter { productRes -> productRes.addDate.orDefault() >= minTimeForBeNew }
+                                                ?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)
+                                                ?: ProductRes(),
+                                            navController,
+                                            isNew = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)?.addDate.orDefault() > minTimeForBeNew,
+                                            viewModel = viewModel
+                                        )
+                                    }
+                                }
+
+                                context.getString(R.string.popular) -> {
+                                    items(productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
+                                                ?.sortedByDescending { productRes -> productRes.rate }
+                                                ?.get(index)
+                                                ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
+                                }
+
+                                context.getString(R.string.highest_to_low) -> {
+                                    items(productList?.data?.data?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.price }
+                                                ?.get(index) ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
+                                }
+
+                                context.getString(R.string.lowest_to_high) -> {
+                                    items(productList?.data?.data?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.data?.data?.sortedBy { productRes -> productRes.price }
+                                                ?.get(index) ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
                             }
-
-                            context.getString(R.string.popular) -> {
-                                items(productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
-                                    ProductItemHorizontal(
-                                        productRes = productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
-                                            ?.sortedByDescending { productRes -> productRes.rate }
-                                            ?.get(index)
-                                            ?: ProductRes(),
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                        } else {
+                            when (selectedFilterText) {
+                                context.getString(R.string.newest) -> {
+                                    items(productList?.data?.data?.filter { productRes ->
+                                        productRes.addDate.orDefault() >= minTimeForBeNew &&
+                                                productRes.title?.contains(query, ignoreCase = true)
+                                                    .orFalse()
+                                    }?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.data?.data?.filter { productRes ->
+                                                productRes.addDate.orDefault() >= minTimeForBeNew &&
+                                                        productRes.title?.contains(
+                                                            query,
+                                                            ignoreCase = true
+                                                        ).orFalse()
+                                            }
+                                                ?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index) ?: ProductRes(),
+                                            navController,
+                                            isNew = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)?.addDate.orDefault() > minTimeForBeNew,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
-                            }
 
-                            context.getString(R.string.highest_to_low) -> {
-                                items(productList?.data?.data?.size.orDefault()) { index ->
-                                    ProductItemHorizontal(
-                                        productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.price }
-                                            ?.get(index) ?: ProductRes(),
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                                context.getString(R.string.popular) -> {
+                                    items(productList?.data?.data?.filter { productRes ->
+                                        productRes.rate.orDefault() >= 3.5 && productRes.title?.contains(
+                                            query,
+                                            ignoreCase = true
+                                        )
+                                            .orFalse()
+                                    }?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.data?.data?.filter { productRes ->
+                                                productRes.rate.orDefault() >= 3.5 &&
+                                                        productRes.title?.contains(
+                                                            query,
+                                                            ignoreCase = true
+                                                        ).orFalse()
+                                            }
+                                                ?.sortedByDescending { productRes -> productRes.rate }
+                                                ?.get(index)
+                                                ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
-                            }
 
-                            context.getString(R.string.lowest_to_high) -> {
-                                items(productList?.data?.data?.size.orDefault()) { index ->
-                                    ProductItemHorizontal(
-                                        productRes = productList?.data?.data?.sortedBy { productRes -> productRes.price }
-                                            ?.get(index) ?: ProductRes(),
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                                context.getString(R.string.highest_to_low) -> {
+                                    items(productList?.data?.data?.filter { productRes ->
+                                        productRes.title?.contains(query, ignoreCase = true)
+                                            .orFalse()
+                                    }?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.data?.data?.filter { productRes: ProductRes ->
+                                                productRes.title?.contains(query, ignoreCase = true)
+                                                    .orFalse()
+                                            }?.sortedByDescending { productRes -> productRes.price }
+                                                ?.get(index) ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
+                                }
+
+                                context.getString(R.string.lowest_to_high) -> {
+                                    items(productList?.data?.data?.filter { productRes: ProductRes ->
+                                        productRes.title?.contains(query, ignoreCase = true)
+                                            .orFalse()
+                                    }?.size.orDefault()) { index ->
+                                        ProductItemHorizontal(
+                                            productRes = productList?.data?.data?.filter { productRes: ProductRes ->
+                                                productRes.title?.contains(query, ignoreCase = true)
+                                                    .orFalse()
+                                            }?.sortedBy { productRes -> productRes.price }
+                                                ?.get(index) ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -303,58 +427,150 @@ fun MoreProductScreen(
                     LazyVerticalGrid(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp),
-                        columns = GridCells.Fixed(2)
+                            .padding(8.dp),
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(bottom = 8.dp)
                     ) {
-                        when (selectedFilterText) {
-                            context.getString(R.string.newest) -> {
-                                items(productList?.data?.data?.size.orDefault()) { index ->
-                                    ProductItem(
-                                        productRes = productList?.data?.data?.get(index)
-                                            ?: ProductRes(),
-                                        navController = navController,
-                                        isNew = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
-                                            ?.get(index)?.addDate.orDefault() > minTimeForBeNew,
-                                        viewModel = viewModel
-                                    )
+                        if (query.isEmpty()) {
+                            when (selectedFilterText) {
+                                context.getString(R.string.newest) -> {
+                                    items(productList?.data?.data?.filter { productRes -> productRes.addDate.orDefault() >= minTimeForBeNew }?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.data?.data?.filter { productRes -> productRes.addDate.orDefault() >= minTimeForBeNew }
+                                                ?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)
+                                                ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)?.addDate.orDefault() > minTimeForBeNew,
+                                            viewModel = viewModel
+                                        )
+                                    }
+                                }
+
+                                context.getString(R.string.popular) -> {
+                                    items(productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
+                                                ?.sortedByDescending { productRes -> productRes.rate }
+                                                ?.get(index)
+                                                ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
+                                }
+
+                                context.getString(R.string.highest_to_low) -> {
+                                    items(productList?.data?.data?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.price }
+                                                ?.get(index) ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
+                                }
+
+                                context.getString(R.string.lowest_to_high) -> {
+                                    items(productList?.data?.data?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.data?.data?.sortedBy { productRes -> productRes.price }
+                                                ?.get(index) ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
                             }
-
-                            context.getString(R.string.popular) -> {
-                                items(productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }?.size.orDefault()) { index ->
-                                    ProductItem(
-                                        productRes = productList?.data?.data?.filter { productRes -> productRes.rate.orDefault() >= 3.5 }
-                                            ?.sortedByDescending { productRes -> productRes.rate }
-                                            ?.get(index)
-                                            ?: ProductRes(),
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                        } else {
+                            when (selectedFilterText) {
+                                context.getString(R.string.newest) -> {
+                                    items(productList?.data?.data?.filter { productRes ->
+                                        productRes.addDate.orDefault() >= minTimeForBeNew &&
+                                                productRes.title?.contains(query, ignoreCase = true)
+                                                    .orFalse()
+                                    }?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.data?.data?.filter { productRes ->
+                                                productRes.addDate.orDefault() >= minTimeForBeNew &&
+                                                        productRes.title?.contains(
+                                                            query,
+                                                            ignoreCase = true
+                                                        ).orFalse()
+                                            }
+                                                ?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)
+                                                ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = productList?.data?.data?.sortedByDescending { productRes -> productRes.addDate }
+                                                ?.get(index)?.addDate.orDefault() > minTimeForBeNew,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
-                            }
 
-                            context.getString(R.string.highest_to_low) -> {
-                                items(productList?.data?.data?.size.orDefault()) { index ->
-                                    ProductItem(
-                                        productRes = productList?.data?.data?.sortedByDescending { productRes -> productRes.price }
-                                            ?.get(index) ?: ProductRes(),
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                                context.getString(R.string.popular) -> {
+                                    items(productList?.data?.data?.filter { productRes ->
+                                        productRes.rate.orDefault() >= 3.5 &&
+                                                productRes.title?.contains(query, ignoreCase = true)
+                                                    .orFalse()
+                                    }?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.data?.data?.filter { productRes ->
+                                                productRes.rate.orDefault() >= 3.5 &&
+                                                        productRes.title?.contains(
+                                                            query,
+                                                            ignoreCase = true
+                                                        ).orFalse()
+                                            }
+                                                ?.sortedByDescending { productRes -> productRes.rate }
+                                                ?.get(index)
+                                                ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
-                            }
 
-                            context.getString(R.string.lowest_to_high) -> {
-                                items(productList?.data?.data?.size.orDefault()) { index ->
-                                    ProductItem(
-                                        productRes = productList?.data?.data?.sortedBy { productRes -> productRes.price }
-                                            ?.get(index) ?: ProductRes(),
-                                        navController = navController,
-                                        isNew = false,
-                                        viewModel = viewModel
-                                    )
+                                context.getString(R.string.highest_to_low) -> {
+                                    items(productList?.data?.data?.filter { productRes: ProductRes ->
+                                        productRes.title?.contains(query, ignoreCase = true)
+                                            .orFalse()
+                                    }?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.data?.data?.filter { productRes: ProductRes ->
+                                                productRes.title?.contains(query, ignoreCase = true)
+                                                    .orFalse()
+                                            }?.sortedByDescending { productRes -> productRes.price }
+                                                ?.get(index) ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
+                                }
+
+                                context.getString(R.string.lowest_to_high) -> {
+                                    items(productList?.data?.data?.filter { productRes: ProductRes ->
+                                        productRes.title?.contains(query, ignoreCase = true)
+                                            .orFalse()
+                                    }?.size.orDefault()) { index ->
+                                        ProductItem(
+                                            productRes = productList?.data?.data?.filter { productRes: ProductRes ->
+                                                productRes.title?.contains(query, ignoreCase = true)
+                                                    .orFalse()
+                                            }?.sortedBy { productRes -> productRes.price }
+                                                ?.get(index) ?: ProductRes(),
+                                            navController = navController,
+                                            isNew = false,
+                                            viewModel = viewModel
+                                        )
+                                    }
                                 }
                             }
                         }

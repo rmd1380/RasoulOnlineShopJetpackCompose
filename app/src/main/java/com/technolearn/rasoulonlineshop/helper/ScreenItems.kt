@@ -1,9 +1,7 @@
 package com.technolearn.rasoulonlineshop.helper
 
-import android.view.MenuItem
-import android.widget.PopupMenu
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,20 +26,16 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
@@ -51,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.skydoves.landscapist.glide.GlideImage
 import com.technolearn.rasoulonlineshop.R
-import com.technolearn.rasoulonlineshop.mapper.toUpdateUserReq
 import com.technolearn.rasoulonlineshop.navigation.Screen
 import com.technolearn.rasoulonlineshop.ui.theme.Black
 import com.technolearn.rasoulonlineshop.ui.theme.Error
@@ -65,14 +58,10 @@ import com.technolearn.rasoulonlineshop.ui.theme.Success
 import com.technolearn.rasoulonlineshop.ui.theme.Warning
 import com.technolearn.rasoulonlineshop.ui.theme.White
 import com.technolearn.rasoulonlineshop.util.Extensions.orDefault
-import com.technolearn.rasoulonlineshop.util.Extensions.orFalse
 import com.technolearn.rasoulonlineshop.vm.ShopViewModel
 import com.technolearn.rasoulonlineshop.vo.entity.UserAddressEntity
 import com.technolearn.rasoulonlineshop.vo.entity.UserCartEntity
-import com.technolearn.rasoulonlineshop.vo.enums.ButtonSize
-import com.technolearn.rasoulonlineshop.vo.enums.ButtonStyle
 import com.technolearn.rasoulonlineshop.vo.enums.OrderState
-import com.technolearn.rasoulonlineshop.vo.enums.Status
 import com.technolearn.rasoulonlineshop.vo.res.ProductRes
 import timber.log.Timber
 import kotlin.math.roundToInt
@@ -98,8 +87,9 @@ fun ProductItem(
             .clip(RoundedCornerShape(8.dp))
             .clickable {
                 navController.navigate(
-                    route = Screen.ProductDetailScreen.passProductId(
-                        productRes?.id.orDefault()
+                    route = Screen.ProductDetailScreen.passProductIdAndCategoryId(
+                        productRes?.id.orDefault(),
+                        productRes?.category?.id.orDefault()
                     )
                 )
                 Timber.d("ProductScreen::::${productRes?.id.orDefault()}")
@@ -260,8 +250,9 @@ fun ProductItemHorizontal(
                 .clip(RoundedCornerShape(8.dp))
                 .clickable {
                     navController.navigate(
-                        route = Screen.ProductDetailScreen.passProductId(
-                            productRes?.id.orDefault()
+                        route = Screen.ProductDetailScreen.passProductIdAndCategoryId(
+                            productRes?.id.orDefault(),
+                            productRes?.category?.id.orDefault()
                         )
                     )
                     Timber.d("ProductScreen::::${productRes?.id.orDefault()}")
@@ -397,14 +388,19 @@ fun ProductItemHorizontal(
 fun ProfileItem(
     title: String,
     subtitle: String,
+    modifier: Modifier,
     onClick: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .clickable { onClick() }) {
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .clickable {
+                .clickable(
+                    interactionSource = MutableInteractionSource(),
+                    indication = null
+                ) {
                     onClick()
                 }, horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -450,7 +446,7 @@ fun OrderItem(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -478,25 +474,33 @@ fun OrderItem(
             Spacer(modifier = Modifier.height(24.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CustomButton(
-                    modifier = Modifier.wrapContentWidth(),
-                    text = "Details",
-                    size = ButtonSize.X_SMALL,
-                    style = ButtonStyle.OUTLINED,
-                    roundCorner = 24.dp,
-                    onClick = {
-                        onClick()
-                    }
-                )
+//                CustomButton(
+//                    modifier = Modifier.wrapContentWidth(),
+//                    text = "Details",
+//                    size = ButtonSize.X_SMALL,
+//                    style = ButtonStyle.OUTLINED,
+//                    roundCorner = 24.dp,
+//                    onClick = {
+//                        onClick()
+//                    }
+//                )
                 Text(
                     text = orderState.name,
-                    color = when(orderState){
-                        OrderState.Delivered->{Success}
-                        OrderState.Processing->{Warning}
-                        OrderState.Cancelled->{Error}
+                    color = when (orderState) {
+                        OrderState.Delivered -> {
+                            Success
+                        }
+
+                        OrderState.Processing -> {
+                            Warning
+                        }
+
+                        OrderState.Cancelled -> {
+                            Error
+                        }
                     }
                 )
             }
@@ -510,7 +514,9 @@ fun CartItem(
     userCartEntity: UserCartEntity?,
     navController: NavController,
     viewModel: ShopViewModel,
-    more: () -> Unit
+    more: () -> Unit,
+    increase: () -> Unit,
+    decrease: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -524,8 +530,9 @@ fun CartItem(
                 .clip(RoundedCornerShape(8.dp))
                 .clickable {
                     navController.navigate(
-                        route = Screen.ProductDetailScreen.passProductId(
-                            userCartEntity?.id.orDefault()
+                        route = Screen.ProductDetailScreen.passProductIdAndCategoryId(
+                            userCartEntity?.id.orDefault(),
+                            userCartEntity?.category?.id.orDefault()
                         )
                     )
                     Timber.d("ProductScreen::::${userCartEntity?.id.orDefault()}")
@@ -622,7 +629,8 @@ fun CartItem(
                                         .size(36.dp),
                                     icon = painterResource(id = R.drawable.ic_subtract)
                                 ) {
-                                    viewModel.decrementQuantity(userCartEntity?.id.orDefault())
+                                    decrease()
+//                                    viewModel.decrementQuantity(userCartEntity?.id.orDefault())
                                 }
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Text(
@@ -635,7 +643,8 @@ fun CartItem(
                                         .size(36.dp),
                                     icon = painterResource(id = R.drawable.ic_add)
                                 ) {
-                                    viewModel.incrementQuantity(userCartEntity?.id.orDefault())
+                                    increase()
+//                                    viewModel.incrementQuantity(userCartEntity?.id.orDefault())
                                 }
                             }
                             Text(
@@ -666,47 +675,11 @@ fun CartItem(
 fun ShippingAddressItem(
     userAddressEntity: UserAddressEntity,
     navController: NavController,
-    isChecked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
+    selected: Boolean,
+    onClick: () -> Unit,
     edit: () -> Unit,
     delete: () -> Unit
 ) {
-
-//    val userLoggedInInfo by remember { viewModel.getLoggedInUser() }.observeAsState()
-//    val updateUserStatus by remember { viewModel.updateUserStatus }.observeAsState()
-//    var myState by remember { mutableStateOf(false) }
-//    val addresses by remember { viewModel.getAllUserAddress() }.observeAsState()
-//    val addressIndex = addresses?.indexOf(userAddressEntity)?:-1
-//    myState = if (addressIndex != -1) {
-//        addresses?.get(addressIndex)?.isAddressSelected.orFalse()
-//    } else {
-//        false // or some default value
-//    }
-
-//    LaunchedEffect(updateUserStatus) {
-//        when (updateUserStatus?.status) {
-//            Status.LOADING -> {
-//                Timber.d("Update:::LOADING:::${updateUserStatus?.data?.status}")
-//            }
-//
-//            Status.SUCCESS -> {
-//                Timber.d("Update:::SUCCESS:::${updateUserStatus?.data}")
-//                if (myState) {
-//                    viewModel.updateUser(
-//                        userLoggedInInfo?.token.orDefault(),
-//                        toUpdateUserReq(userAddressEntity)
-//                    )
-//                    viewModel.updateUserAddress(userAddressEntity)
-//                }
-//            }
-//
-//            Status.ERROR -> {
-//                Timber.d("Update:::ERROR:::${updateUserStatus?.data?.status}")
-//            }
-//
-//            else -> {}
-//        }
-//    }
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
@@ -722,9 +695,7 @@ fun ShippingAddressItem(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .aspectRatio(343f / 140f, true)
-                    .height(140.dp),
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -763,26 +734,27 @@ fun ShippingAddressItem(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(
-                                modifier = Modifier.wrapContentWidth(),
+                                modifier = Modifier
+                                    .wrapContentWidth()
+                                    .clickable(
+                                        indication = null,
+                                        interactionSource = remember { MutableInteractionSource() }
+                                    ) {
+                                        onClick()
+                                    },
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Checkbox(
-                                    checked = isChecked,
+                                    checked = selected,
+                                    onCheckedChange = {
+                                        onClick()
+                                    },
                                     colors = CheckboxDefaults.colors(
                                         uncheckedColor = Gray,
                                         checkedColor = Black,
                                         checkmarkColor = White
-                                    ),
-                                    onCheckedChange = { isChecked ->
-                                        onCheckedChange(isChecked)
-                                        // If you want to update the user address immediately when the checkbox is checked
-//                                        if (isChecked) {
-//                                            // Perform the necessary actions, e.g., update user address in the ViewModel
-//                                            viewModel.updateUserAddress(userAddressEntity.copy(isAddressSelected = true))
-//                                        }
-                                    }
+                                    )
                                 )
-
 
                                 Text(
                                     text = stringResource(R.string.use_as_the_shipping_address),
@@ -813,7 +785,8 @@ fun ShippingAddressItem(
                         color = Primary
                     )
                 }
-            }}
+            }
+        }
     }
 }
 
@@ -826,6 +799,7 @@ fun ShippingAddressItemCheckout(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(elevation = 2.dp, RoundedCornerShape(8.dp))
             .clip(RoundedCornerShape(8.dp))
             .clickable {},
         elevation = 8.dp,
@@ -838,8 +812,8 @@ fun ShippingAddressItemCheckout(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .aspectRatio(343f / 140f, true)
-                    .height(140.dp),
+                    .aspectRatio(343f / 100f, true)
+                    .height(100.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -853,28 +827,40 @@ fun ShippingAddressItemCheckout(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "${userAddressEntity.firstName.orDefault()} ${userAddressEntity.lastName.orDefault()}",
+                            text = if (userAddressEntity.firstName.isEmpty()) {
+                                "----------"
+                            } else {
+                                "${userAddressEntity.firstName.orDefault()} ${userAddressEntity.lastName.orDefault()}"
+                            },
                             style = FontMedium14(Black),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = userAddressEntity.addressName.orDefault(),
+                            text = if (userAddressEntity.addressName.isEmpty()) {
+                                "------------"
+                            } else {
+                                userAddressEntity.addressName.orDefault()
+                            },
                             style = FontRegular14(Black),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = userAddressEntity.address.orDefault(),
+                            text = if (userAddressEntity.address.isEmpty()) {
+                                "---------------"
+                            } else {
+                                userAddressEntity.address.orDefault()
+                            },
                             style = FontRegular14(Black),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
                     Text(
-                        text ="Change",
+                        text = "Change",
                         style = FontMedium14(Black),
                         modifier = Modifier
                             .wrapContentSize()
@@ -885,7 +871,8 @@ fun ShippingAddressItemCheckout(
                         color = Primary
                     )
                 }
-            }}
+            }
+        }
     }
 }
 
@@ -938,3 +925,56 @@ fun DefaultPreview() {
 //        )
     }
 }
+
+//    val userLoggedInInfo by remember { viewModel.getLoggedInUser() }.observeAsState()
+//    val updateUserStatus by remember { viewModel.updateUserStatus }.observeAsState()
+//    var myState by remember { mutableStateOf(false) }
+//    val addresses by remember { viewModel.getAllUserAddress() }.observeAsState()
+//    val addressIndex = addresses?.indexOf(userAddressEntity)?:-1
+//    myState = if (addressIndex != -1) {
+//        addresses?.get(addressIndex)?.isAddressSelected.orFalse()
+//    } else {
+//        false // or some default value
+//    }
+
+//    LaunchedEffect(updateUserStatus) {
+//        when (updateUserStatus?.status) {
+//            Status.LOADING -> {
+//                Timber.d("Update:::LOADING:::${updateUserStatus?.data?.status}")
+//            }
+//
+//            Status.SUCCESS -> {
+//                Timber.d("Update:::SUCCESS:::${updateUserStatus?.data}")
+//                if (myState) {
+//                    viewModel.updateUser(
+//                        userLoggedInInfo?.token.orDefault(),
+//                        toUpdateUserReq(userAddressEntity)
+//                    )
+//                    viewModel.updateUserAddress(userAddressEntity)
+//                }
+//            }
+//
+//            Status.ERROR -> {
+//                Timber.d("Update:::ERROR:::${updateUserStatus?.data?.status}")
+//            }
+//
+//            else -> {}
+//        }
+//    }
+
+//                                Checkbox(
+//                                    checked = isChecked,
+//                                    colors = CheckboxDefaults.colors(
+//                                        uncheckedColor = Gray,
+//                                        checkedColor = Black,
+//                                        checkmarkColor = White
+//                                    ),
+//                                    onCheckedChange = {newCheckedState->
+//                                        onCheckedChange(newCheckedState)
+//                                        // If you want to update the user address immediately when the checkbox is checked
+////                                        if (isChecked) {
+////                                            // Perform the necessary actions, e.g., update user address in the ViewModel
+////                                            viewModel.updateUserAddress(userAddressEntity.copy(isAddressSelected = true))
+////                                        }
+//                                    }
+//                                )

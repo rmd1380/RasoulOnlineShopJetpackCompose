@@ -48,4 +48,15 @@
     <string name="save_changes">SAVE CHANGES</string>
     <string name="card_holder_name">Card Holder Name</string>
     <string name="expiry_date">Expiry Date</string>
+    <string name="payment">Payment</string>
+    <string name="pay">Pay</string>
+    <string name="delivery_method">Delivery method</string>
+    <string name="submit_order">SUBMIT ORDER</string>
+    <string name="success">Success!</string>
+    <string name="continue_shopping">CONTINUE SHOPPING</string>
+    <string name="payment_gateway">Payment Gateway</string>
+    <string name="cancel">Cancel</string>
+    <string name="buy_now">BUY NOW</string>
+    <string name="upload_an_image">UPLOAD AN IMAGE</string>
+    <string name="update_address">UPDATE ADDRESS</string>
 </resources>

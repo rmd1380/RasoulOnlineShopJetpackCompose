@@ -15,7 +15,6 @@ data class ProductRes(
     var colors: ArrayList<ColorRes> = arrayListOf(),
     var sizes: ArrayList<SizeRes> = arrayListOf(),
 //    var invoiceItems: ArrayList<InvoiceItems> = arrayListOf(),
-    //
     var isAddToFavorites: Boolean = false,
     var isAddToCart: Boolean = false
 )

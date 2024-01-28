@@ -3,10 +3,10 @@ package com.technolearn.rasoulonlineshop.di.module
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.compose.runtime.currentComposer
 import androidx.room.Room
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.gson.GsonBuilder
-import com.technolearn.rasoulonlineshop.BuildConfig
 import com.technolearn.rasoulonlineshop.api.ApiService
 import com.technolearn.rasoulonlineshop.db.AppDatabase
 import com.technolearn.rasoulonlineshop.db.dao.FavoritesDao
@@ -41,33 +41,34 @@ class AppModule {
             Constants.Prefs.SHARED_PREFS_NAME, Context.MODE_PRIVATE
         )
     }
-
+//    @Provides
+//    @Singleton
+//    fun providesOkHttpClient(@ApplicationContext context: Context): OkHttpClient =
+//        OkHttpClient.Builder()
+//            .addInterceptor(ChuckerInterceptor(context))
+//            .build()
     @Provides
     @Singleton
     fun provideOkHttpClient(
         sharedPreferences: SharedPreferences, @ApplicationContext appContext: Context
     ): OkHttpClient {
         val logging = HttpLoggingInterceptor()
+        val chuckerInterceptor = ChuckerInterceptor(appContext)
         logging.setLevel(HttpLoggingInterceptor.Level.BODY)
         val builder = OkHttpClient().newBuilder()
             .addInterceptor(logging)
+            .addInterceptor(chuckerInterceptor)
             .callTimeout(60, TimeUnit.SECONDS)
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
-
-        if (BuildConfig.DEBUG) {
-            builder.addInterceptor(ChuckerInterceptor(appContext))
-        }
 
         return builder.build()
     }
 
     @Provides
     @Singleton
-    fun provideApiService(
-        okHttpClient: OkHttpClient, sharedPreferences: SharedPreferences
-    ): ApiService {
+    fun provideApiService(okHttpClient: OkHttpClient): ApiService {
 
         val retrofit = Retrofit.Builder()
             .baseUrl(Constants.Base.MAIN_URL)
@@ -76,10 +77,21 @@ class AppModule {
                     GsonBuilder().setLenient().create()
                 )
             )
-            .client(UnsafeSSLConfig.unsafeOkHttpClient.build()).build()
+            .client(UnsafeSSLConfig.unsafeOkHttpClient.build())
+            .build()
         return retrofit.create(ApiService::class.java)
     }
-
+//    @Provides
+//    @Singleton
+//    fun provideApiService(okHttpClient: OkHttpClient): ApiService = Retrofit.Builder()
+//        .baseUrl(Constants.Base.MAIN_URL)
+//        .addConverterFactory( GsonConverterFactory.create(
+//            GsonBuilder().setLenient().create()
+//        ))
+//        .client(okHttpClient)
+//        .client(UnsafeSSLConfig.unsafeOkHttpClient.build())
+//        .build()
+//        .create(ApiService::class.java)
     @Provides
     @Singleton
     fun provideAppDB(application: Application): AppDatabase {

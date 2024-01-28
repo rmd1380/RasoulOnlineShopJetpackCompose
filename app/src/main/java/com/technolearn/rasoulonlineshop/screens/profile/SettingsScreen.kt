@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -72,6 +73,7 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
     val userLoggedInInfo by remember { viewModel.getLoggedInUser() }.observeAsState()
     val updateUserPasswordStatus by remember { viewModel.updateUserPasswordStatus }.observeAsState()
 
+    val maxCharUserName = 50
     var userName by remember { mutableStateOf(userLoggedInInfo?.username.orEmpty()) }
     var userNameHasError by remember { mutableStateOf(false) }
     var userNameLabel by remember { mutableStateOf("User Name") }
@@ -80,14 +82,17 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
     var dateOfBirthHasError by remember { mutableStateOf(false) }
     var dateOfBirthLabel by remember { mutableStateOf("Date Of Birth") }
 
+    val maxCharOldPassword = 50
     var oldPassword by remember { mutableStateOf("") }
     var oldPasswordHasError by remember { mutableStateOf(false) }
     var oldPasswordLabel by remember { mutableStateOf("Old Password") }
 
+    val maxCharNewPassword = 50
     var newPassword by remember { mutableStateOf("") }
     var newPasswordHasError by remember { mutableStateOf(false) }
     var newPasswordLabel by remember { mutableStateOf("New Password") }
 
+    val maxCharRepeatNewPassword = 50
     var repeatNewPassword by remember { mutableStateOf("") }
     var repeatNewPasswordHasError by remember { mutableStateOf(false) }
     var repeatNewPasswordLabel by remember { mutableStateOf("Repeat New Password") }
@@ -225,7 +230,7 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
                         )
                     },
                     onValueChange = { value ->
-                        userName = value
+                        if (value.length <= maxCharUserName) userName = value
                         userNameHasError = userName.isEmpty()
                         userNameLabel =
                             if (userName.isNotEmpty()) "User Name" else "User Name Can Not Be Empty"
@@ -371,11 +376,7 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(
-                                end = 16.dp,
-                                start = 16.dp,
-                                bottom = 16.dp
-                            ),
+                            .padding(end = 16.dp, start = 16.dp, bottom = 64.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -394,7 +395,7 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
                                 )
                             },
                             onValueChange = { value ->
-                                oldPassword = value
+                                if (value.length <= maxCharOldPassword) oldPassword = value
                                 oldPasswordHasError = oldPassword.isEmpty()
                                 oldPasswordLabel =
                                     if (oldPassword.isNotEmpty()) "Old Password" else "Old Password Can Not Be Empty"
@@ -414,7 +415,7 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
                                 cursorColor = Black
                             ),
                             shape = RoundedCornerShape(4.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                             singleLine = true
                         )
                         //endregion
@@ -429,7 +430,7 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
                                 )
                             },
                             onValueChange = { value ->
-                                newPassword = value
+                                if (value.length <= maxCharNewPassword) newPassword = value
                                 newPasswordHasError = newPassword.isEmpty()
                                 newPasswordLabel =
                                     if (newPassword.isNotEmpty()) "New Password" else "New Password Can Not Be Empty"
@@ -449,12 +450,12 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
                                 cursorColor = Black
                             ),
                             shape = RoundedCornerShape(4.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
                             singleLine = true
                         )
                         //endregion
                         Spacer(modifier = Modifier.height(20.dp))
-                        //region CardExpireDate
+                        //region RepeatNewPassword
                         TextField(
                             value = repeatNewPassword,
                             label = {
@@ -464,7 +465,7 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
                                 )
                             },
                             onValueChange = { value ->
-                                repeatNewPassword = value
+                                if (value.length <= maxCharRepeatNewPassword) repeatNewPassword = value
                                 repeatNewPasswordHasError =
                                     repeatNewPassword.isEmpty()
                                 repeatNewPasswordLabel =
@@ -485,7 +486,7 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
                                 cursorColor = Black
                             ),
                             shape = RoundedCornerShape(4.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                             singleLine = true
                         )
                         //endregion
@@ -519,7 +520,6 @@ fun SettingsScreen(navController: NavController, viewModel: ShopViewModel) {
                                         repeatNewPasswordLabel =
                                             "Password not matched to repeat password"
                                     }
-
                                     !oldPasswordHasError
                                             && !newPasswordHasError
                                             && !repeatNewPasswordHasError -> {

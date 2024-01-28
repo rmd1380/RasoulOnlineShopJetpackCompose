@@ -15,5 +15,10 @@ object Constants {
         const val PRODUCT_ID = "PRODUCT_ID"
         const val WHAT_IS_TITLE = "WHAT_IS_TITLE"
         const val CATEGORY_ID = "CATEGORY_ID"
+        const val MODEL_NAME = "MODEL_NAME"
+        const val INVOICE_ID = "INVOICE_ID"
+        const val WHAT_IS_TITLE_FOR_SEARCH = "WHAT_IS_TITLE_FOR_SEARCH"
+        const val IS_EDIT = "IS_EDIT"
+        const val ADDRESS_ID = "ADDRESS_ID"
     }
 }
